@@ -1,12 +1,5 @@
 import React from 'react'
-import Layout from '../../layouts/newspaper'
-import { RichText } from 'prismic-reactjs';
-
-import { newsPostAPI } from '../../api';
-// We create this in just a tick
-import { linkResolver } from '../../helpers';
-import getWidth from '../../layouts/utility'
-
+import { RichText } from 'prismic-reactjs'
 import {
     Container,
     Header,
@@ -16,57 +9,61 @@ import {
     Rail,
     Segment
 } from 'semantic-ui-react'
-import SocialShareWidget from '../../components/SocialShareWidget'
 
+import Layout from '../../layouts/newspaper'
+import getWidth from '../../layouts/utility'
+import SocialShareWidget from '../../components/SocialShareWidget'
+import { newsPostAPI } from '../../api'
+import { linkResolver } from '../../helpers'
+import { DEFAULT_SEO, NEWS_URL } from '../../config'
 
 class NewsPost extends React.Component {
-
     static async getInitialProps({ query }) {
-        // we get the slug of the post so that we can
-        // query the API with it
-        const { slug } = query;
-        const response = await newsPostAPI(slug);
+        const { slug } = query
+        const response = await newsPostAPI(slug)
         return {
             post: response
-        };
+        }
     }
 
     addJSONLD(post, info, url) {
-        return {
-            __html: `{
-          "@context": "http://schema.org",
-          "@type": "NewsPosting",
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": "${url}"
-          },
-          "headline": "${post.og_title.length ? post.og_title[0].text : ''}",
-          "image": [
-            "${post.og_image.url ? post.og_image.url : ''}"
-          ],
-          "datePublished": "${info.first_publication_date}",
-          "dateModified": "${info.first_publication_date}",
-          "author": {
-            "@type": "Organization",
-            "name": "AbokiFX Rate
-          },
-          "publisher": {
-            "@type": "Organization",
-            "name": "AbokiFX Rate",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "/static/assets/android-chrome-512x512.png"
-            }
-          },
-          "description": "${post.og_description.length ? post.og_description[0].text : ''}"
-        }`
-        };
+        const headline = post.og_title && post.og_title.length ? post.og_title[0].text : ''
+        const description = post.og_description && post.og_description.length ? post.og_description[0].text : ''
+        const imageUrl = post.og_image && post.og_image.url ? post.og_image.url : ''
+
+        const schema = {
+            '@context': 'http://schema.org',
+            '@type': 'NewsPosting',
+            mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': url
+            },
+            headline,
+            image: imageUrl ? [imageUrl] : [],
+            datePublished: info.first_publication_date,
+            dateModified: info.last_publication_date || info.first_publication_date,
+            author: {
+                '@type': 'Organization',
+                name: 'AbokiFX Rate'
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'AbokiFX Rate',
+                logo: {
+                    '@type': 'ImageObject',
+                    url: `${DEFAULT_SEO.openGraph.url}/static/assets/android-chrome-512x512.png`
+                }
+            },
+            description
+        }
+
+        return { __html: JSON.stringify(schema) }
     }
 
     renderHeader(post) {
         return (
             <Container style={{
-                backgroundImage: `url(${post.og_image.url ? post.og_image.url : ''})`,
+                backgroundImage: `url(${post.og_image && post.og_image.url ? post.og_image.url : ''})`,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
@@ -78,12 +75,25 @@ class NewsPost extends React.Component {
     }
 
     render() {
-        const post = this.props.post.data
-        const info = this.props.post;
-        const url = `https://www.yourdomain.ie/blog/${info.uid}`;
+        const info = this.props.post
+        const post = info && info.data ? info.data : null
+
+        if (!post) {
+            return (
+                <Layout meta={{ title: 'News Post', description: 'News post not found' }}>
+                    <Container style={{ paddingBottom: '50px' }}>
+                        <Header as='h1' textAlign='center' content='News post not found' />
+                    </Container>
+                </Layout>
+            )
+        }
+
+        const title = post.title && post.title.length ? post.title[0].text : 'AbokiFX News'
+        const description = post.og_description && post.og_description.length ? post.og_description[0].text : 'Nigerian news from AbokiFX'
+        const url = `${DEFAULT_SEO.openGraph.url}/${NEWS_URL}/${info.uid}`
         const meta = {
-            title: '',
-            description: 'Index description'
+            title,
+            description
         }
 
         return (
@@ -91,27 +101,26 @@ class NewsPost extends React.Component {
                 <Container style={{ paddingBottom: '50px' }}>
                     <Grid centered columns={1} reversed>
                         <Grid.Column mobile='sixteen' computer='thirteen' floated='right'>
-                            <Header content={post.title.length ? post.title[0].text : ''} as='h1' textAlign='center' />
+                            <Header content={title} as='h1' textAlign='center' />
                             <Segment padded>
                                 <article>
-                                    {RichText.render(post.body, linkResolver)}
+                                    {RichText.render(post.body || [], linkResolver)}
                                 </article>
                             </Segment>
                             <Responsive getWidth={getWidth} minWidth={Responsive.onlyTablet.minWidth}>
                                 <Rail position='left' attached='bottom'>
                                     <Sticky>
                                         <Segment padded vertical size='massive'>
-                                            <SocialShareWidget 
-                                                content={post.og_description.length ? post.og_description[0].text : ''}
+                                            <SocialShareWidget
+                                                content={description}
                                                 linkID={info.uid}
-                                                dropdown
                                             />
                                         </Segment>
                                     </Sticky>
                                 </Rail>
                             </Responsive>
                         </Grid.Column>
-                    </Grid >
+                    </Grid>
                 </Container>
                 <script
                     type="application/ld+json"

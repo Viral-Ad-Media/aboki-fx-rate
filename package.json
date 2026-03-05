@@ -5,9 +5,9 @@
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node server.js",
-    "build": "next build",
-    "deploy": "next build && sls deploy --aws-profile abokifxrate"
+    "dev": "NODE_OPTIONS=--openssl-legacy-provider node server.js",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider next build",
+    "deploy": "npm run build && sls deploy --aws-profile abokifxrate"
   },
   "keywords": [],
   "author": "",

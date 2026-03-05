@@ -1,7 +1,7 @@
 import Head from 'next/head'
 const config = require('../config')
 
-export default ({ props = { title, description } }) => (
+export default ({ props = {} }) => (
     <div>
         <Head>
             <title>

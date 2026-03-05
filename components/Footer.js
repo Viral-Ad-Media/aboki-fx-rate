@@ -15,9 +15,9 @@ export default () => {
                 <Grid.Column width={6}>
                     <Header inverted as='h4' content='AbokiFX Rate' />
                     <List link inverted>
-                        <List.Item as='a'>Privacy</List.Item>
-                        <List.Item as='a'>Cookie Policy</List.Item>
-                        <List.Item as='a'>Legal</List.Item>
+                        <List.Item as='a' href='/privacy'>Privacy</List.Item>
+                        <List.Item as='a' href='/cookie-policy'>Cookie Policy</List.Item>
+                        <List.Item as='a' href='/legal'>Legal</List.Item>
                     </List>
                 </Grid.Column>
                 <Grid.Column width={6}>
@@ -44,12 +44,12 @@ export default () => {
                     <List horizontal relaxed size={'big'}>
                         <List.Item>AbokiFX Rate &copy; {new Date().getFullYear()}</List.Item>
                         <List.Item>
-                            <a href='https://www.facebook.com/AbokiFx-Rate-305191360158341/?modal=admin_todo_tour '>
+                            <a href='https://www.facebook.com/AbokiFx-Rate-305191360158341/?modal=admin_todo_tour' target='_blank' rel='noopener noreferrer'>
                                 <List.Icon name='facebook f' circular color={'black'} />
                             </a>
                         </List.Item>
                         <List.Item>
-                            <a href='https://twitter.com/AbokifxR '>
+                            <a href='https://twitter.com/AbokifxR' target='_blank' rel='noopener noreferrer'>
                                 <List.Icon name='twitter' circular color={'black'} />
                             </a>
                         </List.Item>

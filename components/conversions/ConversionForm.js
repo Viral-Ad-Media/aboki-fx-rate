@@ -8,162 +8,162 @@ import {
     Tab,
     Segment
 } from 'semantic-ui-react'
+
 const currenciesJson = require('../../supported-currencies.json')
 const fxJson = require('../../fx.json')
 
+const fxRates = fxJson.results || {}
+const allowedCurrencyCodes = [...new Set(Object.keys(fxRates).map(key => key.split('_')[0]).concat('NGN'))]
+const currencyOptions = Object.entries(currenciesJson.results || {})
+    .filter(([code]) => allowedCurrencyCodes.includes(code))
+    .map(([code, currency]) => ({
+        key: code,
+        text: currency.currencyName,
+        value: code
+    }))
+
+const rateToNGN = currencyCode => {
+    if (currencyCode === 'NGN') {
+        return 1
+    }
+
+    const rate = fxRates[`${currencyCode}_NGN`]
+    return rate ? Number.parseFloat(rate.val) : null
+}
+
+const getConversionRates = (fromCurrency, toCurrency) => {
+    if (fromCurrency === toCurrency) {
+        return { fromTo: 1, toFrom: 1 }
+    }
+
+    const directPair = fxRates[`${fromCurrency}_${toCurrency}`]
+    if (directPair && directPair.val) {
+        const directValue = Number.parseFloat(directPair.val)
+        return { fromTo: directValue, toFrom: 1 / directValue }
+    }
+
+    const fromToNGN = rateToNGN(fromCurrency)
+    const toToNGN = rateToNGN(toCurrency)
+
+    if (!fromToNGN || !toToNGN) {
+        return { fromTo: 0, toFrom: 0 }
+    }
+
+    const derivedRate = fromToNGN / toToNGN
+    return { fromTo: derivedRate, toFrom: 1 / derivedRate }
+}
 
 class ConversionForm extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
-            currencies: [],
-            fxRate: {},
             toCurrencyID: 'NGN',
-            fromcurrencyID: 'USD',
+            fromCurrencyID: 'USD',
             fromToConversionRate: 0,
             toFromConversionRate: 0,
-            amount: 0
-        }
-        
-        this.handleChange = this.handleChange.bind(this)
-        this.getCurrencies = this.getCurrencies.bind(this)
-        this.renderCurrencyDataList = this.renderCurrencyDataList.bind(this)
-        this.getCurrencies()
-    }
-    getCurrencies()  {
-        let raw = currenciesJson.results
-        let allowed = Object.keys(fxJson.results)
-        allowed = allowed.map(fromToCurrency => fromToCurrency.split('_')[0])
-        allowed.push('NGN')
-        currenciesJson.results = Object.keys(raw)
-                            .filter(key => allowed.includes(key))
-                            .reduce((obj, key) => { 
-                                obj[key] = raw[key]
-                                return obj; 
-                                }, {}
-                            )
-        this.setState({currencies: Object.entries(currenciesJson.results)})
-    }
-
-    renderCurrencyDataList () {
-        return this.state.currencies.map(currency => { 
-            return {
-                key: currency[0],
-                text: currency[1].currencyName,
-                value: currency[0]
-            }
-        })  
-    }
-
-    handleChange = (event, data) => {
-        if (data.input.id === 'amount') {
-            this.setState({amount: data.value})
-        }
-        else if (data.input.id === "form-select-control-from") {
-            this.convertCurrency(data.value, this.state.toCurrencyID)
-        }
-        else if (data.input.id === "form-select-control-to") {
-            this.convertCurrency(this.state.fromcurrencyID, data.value)
+            amount: '0'
         }
     }
 
-    async convertCurrency (fromCurrency, toCurrency) {
-        const fxRate = this.state.fxRate.results
-        let fromToQuery = `${fromCurrency}_${toCurrency}`
-        const checkfx = defaultfx => fxRate[defaultfx]
-        const derivedFx = (fr, to) => {
-            const filteredfxPair = Object.keys(fxRate).filter(key => [fr, to].includes(key.split('_')[0]))
-            let filteredFx = filteredfxPair.reduce((obj, key) => { 
-                obj[key] = fxRate[key]
-                return obj}, {}
-            )
-            const fr_to = {val: filteredFx[`${fr}_NGN`].val / filteredFx[`${to}_NGN`].val, to: toCurrency, fr: fromCurrency}
-            const to_fr = {val: filteredFx[`${to}_NGN`].val / filteredFx[`${fr}_NGN`].val, to: toCurrency, fr: fromCurrency}
-            return [fr_to, to_fr]
-        }
+    componentDidMount() {
+        this.updateRates(this.state.fromCurrencyID, this.state.toCurrencyID)
+    }
+
+    updateRates = (fromCurrencyID, toCurrencyID) => {
+        const rates = getConversionRates(fromCurrencyID, toCurrencyID)
         this.setState({
-            fromToConversionRate: checkfx(fromToQuery)? 
-                                    Number.parseFloat(fxRate[fromToQuery].val).toFixed(4) : 
-                                    Number.parseFloat(derivedFx(fromCurrency, toCurrency)[0].val).toFixed(4),
-            toFromConversionRate: checkfx(fromToQuery)? 
-                                    Number.parseFloat(1/fxRate[fromToQuery].val).toFixed(4) : 
-                                    Number.parseFloat(derivedFx(fromCurrency, toCurrency)[1].val).toFixed(4),
-            toCurrencyID: checkfx(fromToQuery)? 
-                                    fxRate[fromToQuery].to : 
-                                    derivedFx(fromCurrency, toCurrency)[0].to,
-            fromcurrencyID: checkfx(fromToQuery)? 
-                                    fxRate[fromToQuery].fr : 
-                                    derivedFx(fromCurrency, toCurrency)[0].fr,
+            fromCurrencyID,
+            toCurrencyID,
+            fromToConversionRate: rates.fromTo,
+            toFromConversionRate: rates.toFrom
         })
     }
 
-    async componentDidMount () {
-        this.setState({fxRate: fxJson})
-        await this.getCurrencies()
-        await this.convertCurrency(this.state.fromcurrencyID, this.state.toCurrencyID)
+    handleChange = (event, data) => {
+        const { name, value } = data
+        if (name === 'amount') {
+            this.setState({ amount: value })
+            return
+        }
+
+        if (name === 'fromCurrencyID') {
+            this.updateRates(value, this.state.toCurrencyID)
+            return
+        }
+
+        if (name === 'toCurrencyID') {
+            this.updateRates(this.state.fromCurrencyID, value)
+        }
     }
 
-    render () {
+    render() {
+        const amountValue = Number.parseFloat(this.state.amount)
+        const normalizedAmount = Number.isFinite(amountValue) ? amountValue : 0
+        const convertedAmount = normalizedAmount * this.state.fromToConversionRate
+
         return (
-            <Tab panes={[{menuItem: 'Live Market Rates', render: () =>(<Segment style={{borderRadius:0}} inverted color={'black'}><Form size='big'>
-              <Header color={'orange'} content="Choose The Currencies You Wish To Convert Below" style={{textAlign:'center', fontWeight: 'bolder', marginBottom: '25px'}} />
+            <Tab panes={[{ menuItem: 'Live Market Rates', render: () => (<Segment style={{ borderRadius: 0 }} inverted color={'black'}><Form size='big'>
+              <Header color={'orange'} content="Choose The Currencies You Wish To Convert Below" style={{ textAlign: 'center', fontWeight: 'bolder', marginBottom: '25px' }} />
                 <Form.Group widths='equal'>
                     <Form.Field
                         control={Dropdown}
-                        options={this.renderCurrencyDataList()}
-                        label={<Label htmlFor='form-select-control-from' content={'From'} color={'orange'} pointing={'below'} />}
-                        placeholder={this.state.fromCountryID}
+                        options={currencyOptions}
+                        label={<Label htmlFor='from-currency' content={'From'} color={'orange'} pointing={'below'} />}
+                        placeholder={this.state.fromCurrencyID}
                         search
-                        selection 
+                        selection
                         fluid
                         onChange={this.handleChange}
-                        defaultValue={this.state.fromcurrencyID}
-                        input={{ id: 'form-select-control-from' }}
+                        value={this.state.fromCurrencyID}
+                        id='from-currency'
+                        name='fromCurrencyID'
                     />
                     <Form.Field
                         control={Dropdown}
-                        options={this.renderCurrencyDataList()}
-                        label={<Label htmlFor='form-select-control-to' content={'To'} color={'orange'} pointing={'below'} />}
-                        placeholder={this.state.toCountryID}
+                        options={currencyOptions}
+                        label={<Label htmlFor='to-currency' content={'To'} color={'orange'} pointing={'below'} />}
+                        placeholder={this.state.toCurrencyID}
                         search
                         onChange={this.handleChange}
-                        defaultValue={this.state.toCurrencyID}
-                        selection 
+                        value={this.state.toCurrencyID}
+                        selection
                         fluid
-                        input={{ id: 'form-select-control-to' }}
+                        id='to-currency'
+                        name='toCurrencyID'
                     />
                     <Form.Field
-                        label={<Label htmlFor='form-select-control-amount' content={'Amount'} color={'orange'} pointing={'below'} />}
+                        label={<Label htmlFor='amount' content={'Amount'} color={'orange'} pointing={'below'} />}
                         control={Input}
-                        input={{id: 'amount'}}
-                        placeholder={this.state.amount}
+                        id='amount'
+                        placeholder='0'
                         value={this.state.amount}
                         fluid
                         width='eight'
                         onChange={this.handleChange}
+                        name='amount'
                     />
                 </Form.Group>
-                <Header as={Segment} color='grey' style={{fontSize: 'small', fontWeight: 'lighter'}} content='All figures are live mid-market rates, which are not available to consumers and are for informational purposes only.' />
-                <Header 
-                    style={{fontWeight: 'bold'}} 
+                <Header as={Segment} color='grey' style={{ fontSize: 'small', fontWeight: 'lighter' }} content='All figures are live mid-market rates, which are not available to consumers and are for informational purposes only.' />
+                <Header
+                    style={{ fontWeight: 'bold' }}
                     color={'orange'}
                     as='h4'
-                    content={`${this.state.amount} ${this.state.fromcurrencyID} = `} 
+                    content={`${normalizedAmount} ${this.state.fromCurrencyID} = `}
                 />
-                <h1 style={{color: '#f2711c', fontWeight: 'bolder', fontSize:'3em'}}>
-                    {Number.parseFloat(this.state.fromToConversionRate*this.state.amount).toFixed(4)} <small style={{fontSize:'large'}}>{this.state.toCurrencyID}</small>
+                <h1 style={{ color: '#f2711c', fontWeight: 'bolder', fontSize: '3em' }}>
+                    {convertedAmount.toFixed(4)} <small style={{ fontSize: 'large' }}>{this.state.toCurrencyID}</small>
                 </h1>
-                <Header 
-                    style={{color: '#f2711c', fontWeight: 'bolder'}} 
+                <Header
+                    style={{ color: '#f2711c', fontWeight: 'bolder' }}
                     as='h3'
-                    content={`${this.state.amount? 1:0} ${this.state.toCurrencyID} = ${this.state.amount?this.state.toFromConversionRate:0} ${this.state.fromcurrencyID}`} 
+                    content={`1 ${this.state.toCurrencyID} = ${this.state.toFromConversionRate.toFixed(4)} ${this.state.fromCurrencyID}`}
                 />
-                <Header 
-                    style={{color: '#f2711c', fontWeight: 'bold'}} 
+                <Header
+                    style={{ color: '#f2711c', fontWeight: 'bold' }}
                     as='h3'
-                    content={`${this.state.amount? 1:0} ${this.state.fromcurrencyID} = ${this.state.amount? this.state.fromToConversionRate:0} ${this.state.toCurrencyID}`} 
+                    content={`1 ${this.state.fromCurrencyID} = ${this.state.fromToConversionRate.toFixed(4)} ${this.state.toCurrencyID}`}
                 />
-            </Form></Segment>)}]} />
+            </Form></Segment>) }]} />
 
         )
     }

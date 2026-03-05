@@ -22,7 +22,7 @@ const meta = {
 }
 
 const Home = (props) => {
-    const { data } = props.landing
+    const data = (props.landing && props.landing.data) ? props.landing.data : { slices: [] }
     return (
         <Layout meta={meta} heading={<HomepageHeading />}>
             <Responsive as={Container} getWidth={getWidth} minWidth={Responsive.onlyTablet.minWidth}>
@@ -36,22 +36,29 @@ const Home = (props) => {
                     <Grid.Row columns={2}>
                         {data.slices.map((slice, key) => {
                             switch (slice.slice_type) {
-                                case 'simple_card':
+                                case 'simple_card': {
+                                    const headerText = slice.primary && slice.primary.simple_card_header && slice.primary.simple_card_header.length
+                                        ? slice.primary.simple_card_header[0].text
+                                        : ''
+                                    const imageUrl = slice.primary && slice.primary.simple_card_image ? slice.primary.simple_card_image.url : ''
                                     return (
-                                        <Grid.Column key={key}>
+                                        <Grid.Column key={`${slice.slice_type}-${key}`}>
                                             <Card color='orange' fluid >
-                                                <Image src={slice.primary.simple_card_image.url} />
+                                                <Image src={imageUrl} alt={headerText} />
                                                 <Card.Content>
                                                     <Card.Header as={Label} color='orange' textAlign='center'>
-                                                        {slice.primary.simple_card_header[0].text}
+                                                        {headerText}
                                                     </Card.Header>
                                                 </Card.Content>
                                                 <Card.Content textAlign='center'>
-                                                    {slice.items.map((item, key) => <Label style={{ margin: '5px' }} key={key} color='black'>{item.simple_card_meta}</Label>)}
+                                                    {slice.items.map((item, itemKey) => <Label style={{ margin: '5px' }} key={`${item.simple_card_meta}-${itemKey}`} color='black'>{item.simple_card_meta}</Label>)}
                                                 </Card.Content>
                                             </Card>
                                         </Grid.Column>
                                     )
+                                }
+                                default:
+                                    return null
                             }
                         })}
                     </Grid.Row>
@@ -68,10 +75,10 @@ const Home = (props) => {
 }
 
 Home.getInitialProps = async () => {
-    // Here we call the API and request 5 documents
     const response = await docAPI({}, 'landing');
+    const landing = response.results && response.results[0] ? response.results[0] : { data: { slices: [] } };
     return {
-        landing: response.results[0]
+        landing
     }
 }
 

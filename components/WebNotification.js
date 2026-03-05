@@ -9,16 +9,22 @@ class WebNotification extends React.Component {
   }
 
   showNotifications() {
-    if(this.n.supported()) this.n.show();
+    if (this.n && this.n.supported()) {
+      this.n.show();
+    }
   }
 
   handleClick(event) {
     window.focus()
-    this.n.close(event.target.tag);
+    if (this.n) {
+      this.n.close(event.target.tag);
+    }
   }
 
   componentDidMount() {
-    this.n.show()
+    if (this.n && this.n.supported()) {
+      this.n.show()
+    }
   }
 
   render() {
@@ -27,7 +33,7 @@ class WebNotification extends React.Component {
 
         <ReactNotifications
           onRef={ref => (this.n = ref)} // Required
-          title="Wellcome" // Required
+          title="Welcome" // Required
           body="receive realtime update!"
           icon="devices-logo.png"
           tag="realtime update"

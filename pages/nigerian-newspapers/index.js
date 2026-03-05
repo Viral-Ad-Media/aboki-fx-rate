@@ -18,10 +18,18 @@ const meta = {
 }
 
 
-const HomePage = ({ post = [] }) => {
+const HomePage = ({ post }) => {
+    const safePost = post && post.data ? post : {
+        uid: '',
+        data: {
+            og_image: { url: '' },
+            title: [{ text: '' }]
+        }
+    }
+
     const RenderHeader = () => (
         <Container style={{
-            backgroundImage: `url(${post.data.og_image.url ? post.data.og_image.url : ''})`,
+            backgroundImage: `url(${safePost.data.og_image && safePost.data.og_image.url ? safePost.data.og_image.url : ''})`,
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
@@ -35,11 +43,15 @@ const HomePage = ({ post = [] }) => {
                 top: '200px',
             }}>
                 <Header as='h1'
-                    subheader='Published by AbokiFx' content={post.data.title[0].text} inverted
+                    subheader='Published by AbokiFx' content={safePost.data.title && safePost.data.title.length ? safePost.data.title[0].text : ''} inverted
                 />
-                <Link route='news' params={{ 'slug': post.uid }}>
-                    <Button style={{marginTop: '100px'}} color='orange' content='Read More' />
-                </Link>
+                {safePost.uid ? (
+                    <Link route='news' params={{ 'slug': safePost.uid }}>
+                        <Button style={{marginTop: '100px'}} color='orange' content='Read More' />
+                    </Link>
+                ) : (
+                    <Button style={{marginTop: '100px'}} color='orange' content='Read More' disabled />
+                )}
                 <div style={{paddingTop: '100px'}}>
                     <Button color='orange' icon='angle double down' disabled/>
                 </div>
@@ -57,10 +69,9 @@ const HomePage = ({ post = [] }) => {
 }
 
 HomePage.getInitialProps = async () => {
-    // Here we call the API and request 5 documents
     const response = await docAPI({ pageSize: 1 }, 'news')
     return {
-        post: response.results[0]
+        post: response.results && response.results[0] ? response.results[0] : null
     }
 }
 

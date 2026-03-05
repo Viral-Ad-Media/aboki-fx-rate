@@ -30,15 +30,16 @@ const HomepageHeading = ({ mobile }) => (
             textAlign='center'
         />
         <Responsive {...Responsive.onlyWidescreen}>
-        <span color={'black'} style={{ pointerEvents: 'none' }}>
+        <span style={{ pointerEvents: 'none' }}>
             <iframe
+                title='Live exchange ticker'
                 src="//www.exchangerates.org.uk/widget/ER-LRTICKER.php?w=490&s=1&mc=GBP&mbg=F2711C&bs=no&bc=000000&f=verdana&fs=10px&fc=FFFFFF&lc=FFFFFF&lhc=FFFFFF&vc=FFFFFF&vcu=FFFFFF&vcd=FFFFFF&"
                 width="650" height="30" frameBorder="0" scrolling="no" marginWidth="0" marginHeight="0">
             </iframe>
         </span>
         </Responsive>
         <span
-            style={{ borderRadius: '5px 5px 0px 0px ', minHeight: '260px', paddedTop: '0px', backgroundColor: 'rgba(0,0,0,.1)' }}
+            style={{ borderRadius: '5px 5px 0px 0px ', minHeight: '260px', paddingTop: '0px', backgroundColor: 'rgba(0,0,0,.1)' }}
         >
         <Grid centered columns={1} reversed>
                     <Grid.Column mobile='sixteen' computer='fifteen' floated='left'>

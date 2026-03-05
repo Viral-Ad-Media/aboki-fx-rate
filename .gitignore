@@ -7,3 +7,6 @@ jspm_packages
 
 # next directories
 .next
+
+# macOS
+.DS_Store

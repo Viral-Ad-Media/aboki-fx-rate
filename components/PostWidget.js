@@ -12,7 +12,7 @@ class NewsWidget extends React.Component {
         this.state = { newsPosts: [] }
     }
 
-    async componentWillMount() {
+    async componentDidMount() {
         const response = await docAPI({ pageSize: (this.props.size || 5), page: (this.props.position || 1) }, 'news')
         this.setState({ newsPosts: response.results || [] })
     }
@@ -26,23 +26,26 @@ class NewsWidget extends React.Component {
                     /> : ''}
                 {this.state.newsPosts.map((news) => (
 
-                    <Card link image={
+                    <Card
+                        key={news.id}
+                        link
+                        image={
                         <Link route='news'
                             params={{ slug: news.uid }}>
-                            <Image src={(news.data.og_image.url || '/static/newspaper-placeholder.png')} height={200} /></Link>}
-                        header={<Header as='h4' content={news.data.title[0].text} textAlign='center' style={{ color: '#fff' }} />}
+                            <Image src={(news.data && news.data.og_image ? news.data.og_image.url : '/static/newspaper-placeholder.png')} height={200} /></Link>}
+                        header={<Header as='h4' content={news.data && news.data.title && news.data.title.length ? news.data.title[0].text : ''} textAlign='center' style={{ color: '#fff' }} />}
                         meta={<span style={{ color: 'white' }}>
                             <TextTruncate
                                 line={2}
                                 truncateText=". . ."
-                                text={news.data.og_description.length ? news.data.og_description[0].text : ''}
+                                text={news.data && news.data.og_description && news.data.og_description.length ? news.data.og_description[0].text : ''}
                             />
                         </span>}
                         style={{ backgroundColor: 'rgb(242, 113, 28)' }}
                         extra={
                             <SocialShareWidget
                                 linkID={news.uid}
-                                content={news.data.og_description.length ? news.data.og_description[0].text : ''}
+                                content={news.data && news.data.og_description && news.data.og_description.length ? news.data.og_description[0].text : ''}
                                 horizontal
                                 page={this.props.page}
                             />

@@ -47,9 +47,9 @@ class DesktopContainer extends React.Component {
                             style={{margin: '0 0'}}
                         >
                             <Container>
-                                <Menu.Item as='a'>
+                                <Menu.Item>
                                     <Link href='/' prefetch passHref>
-                                        <Image src='/static/assets/logo-old.png' inline size='small' />
+                                        <Image src='/static/assets/logo-old.png' alt='AbokiFX Rate logo' inline size='small' />
                                     </Link>
                                     <span style={{ color: 'grey', fontWeight: 'thin', textTransform: 'uppercase', fontFamily: '' }}>
                                         Your daily Naira to dollar exchange rate
@@ -74,6 +74,7 @@ class DesktopContainer extends React.Component {
                 >
                     <Menu.Item as='span' fitted style={{ pointerEvents: 'none' }}>
                         <iframe
+                            title='Desktop exchange ticker'
                             src="//www.exchangerates.org.uk/widget/ER-LRTICKER.php?w=2990&s=1&mc=GBP&mbg=F2711C&bs=no&bc=000000&f=verdana&fs=10px&fc=FFFFFF&lc=FFFFFF&lhc=FFFFFF&vc=FFFFFF&vcu=FFFFFF&vcd=FFFFFF&"
                             width="2990" height="20" frameBorder="0" scrolling="no" marginWidth="0" marginHeight="0">
                         </iframe>

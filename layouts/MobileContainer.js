@@ -7,7 +7,6 @@ import {
     Segment,
     Sidebar,
 } from 'semantic-ui-react'
-import HomepageHeading from '../components/Heading'
 import {Link} from '../routes'
 
 import Navbar from '../components/navbar'
@@ -32,7 +31,7 @@ export default class MobileContainer extends Component {
                     </Menu.Item>
                     <Menu.Item position='right'>
                         <Link href='/'>
-                            <Image src='/static/assets/logo-old.png' size='small' />
+                            <Image src='/static/assets/logo-old.png' alt='AbokiFX Rate logo' size='small' />
                         </Link>
                     </Menu.Item>
                 </Menu>

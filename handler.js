@@ -1,71 +1,87 @@
 'use strict';
-const axios = require('axios')
-const fs = require('fs')
-const async = require('async')
 
-const apiUrl = 'https://free.currencyconverterapi.com/api/v6/'
-const apiKey = '2c07602b107024c25671';
+const axios = require('axios');
+const fs = require('fs');
 
-async function fx(firstCurrency, secondCurrency='NGN') {
-  let encodeFistCurrency = encodeURIComponent(`${firstCurrency}_NGN`)
-  let encodeSecondCurrency = encodeURIComponent(`${secondCurrency}_NGN`)
-  let query = `${encodeFistCurrency},${encodeSecondCurrency}`
-  const url = `${apiUrl}convert?q=${query}&apiKey=${apiKey}`
-  return await axios.get(url)
-  
-}
+const apiUrl = 'https://free.currencyconverterapi.com/api/v6/';
+const apiKey = process.env.CURRENCY_API_KEY || '2c07602b107024c25671';
 
-module.exports.getfx = (event, context) => {
-  let currenciesData = JSON.parse((fs.readFileSync('supported-currencies.json')))
-  let flattenedCurruencies = Object.entries(currenciesData.results).map(item => item[0]).reduce(
-    function(ac, cv) {
-      if (ac.length){
-        let lastitem = ac[ac.length -1]
-        if (lastitem.length < 2) {
-          lastitem.push(cv)
-          ac[ac.length -1] = lastitem
-        } else {
-          ac.push([cv])
-        }
-      } else {
-        ac.push([cv])
-      }
-    
-      return ac
-    }, []
-  )
-  function conversionBuilder(currency) {
-    return function(callback) {
-      fx(...currency)
-      .then(res => {
-        let { data } = res
-        callback(null, data.results)
-      })
-      .catch(res => {
-        let { response } = res
-        callback(response.data, null)
-      })     
-    }
+const chunk = (items, size) => {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
   }
-
-  let fxQueryBuilder = flattenedCurruencies.map(conversionBuilder)
-  async.parallel(fxQueryBuilder.slice(0, 100),
-  (err, results) => {
-    const reducer = (accumulator, currentValue) => {
-      let fxRate = Object.entries(currentValue)
-      accumulator.results[fxRate[0][0]] = fxRate[0][1]
-      accumulator.results[fxRate[1][0]] = fxRate[1][1]
-      return accumulator
-    }
-    let fxCollection = results.reduce(reducer, {"results": {}})
-    !err ? fs.writeFileSync("fx.json", JSON.stringify(fxCollection, null, '\t')) : console.log(err)
-  })
+  return chunks;
 };
 
-module.exports.getcurrencies = async (event, context) => {
-  let url = `${apiUrl}currencies?apiKey=${apiKey}&compact=ultra`
-  const { data } = await axios.get(url)
-  const currencies = JSON.stringify(data, null, '\t')
-  fs.writeFileSync("supported-currencies.json", currencies)
+const fx = async (firstCurrency, secondCurrency = 'NGN') => {
+  const encodeFirstCurrency = encodeURIComponent(`${firstCurrency}_NGN`);
+  const encodeSecondCurrency = encodeURIComponent(`${secondCurrency}_NGN`);
+  const query = `${encodeFirstCurrency},${encodeSecondCurrency}`;
+  const url = `${apiUrl}convert?q=${query}&apiKey=${apiKey}`;
+  const response = await axios.get(url);
+  return response.data && response.data.results ? response.data.results : {};
 };
 
+module.exports.getfx = async () => {
+  try {
+    const currenciesData = JSON.parse(fs.readFileSync('supported-currencies.json', 'utf8'));
+    const currencies = Object.keys(currenciesData.results || {});
+    const currencyPairs = chunk(currencies, 2);
+
+    const conversionResults = await Promise.all(
+      currencyPairs.slice(0, 100).map(async pair => {
+        const [firstCurrency, secondCurrency = 'NGN'] = pair;
+        return fx(firstCurrency, secondCurrency);
+      })
+    );
+
+    const fxCollection = conversionResults.reduce((accumulator, currentValue) => {
+      Object.entries(currentValue || {}).forEach(([key, value]) => {
+        accumulator.results[key] = value;
+      });
+      return accumulator;
+    }, { results: {} });
+
+    fs.writeFileSync('fx.json', JSON.stringify(fxCollection, null, '\t'));
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        updated: Object.keys(fxCollection.results).length
+      })
+    };
+  } catch (error) {
+    console.error('Unable to refresh fx rates', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Unable to refresh fx rates'
+      })
+    };
+  }
+};
+
+module.exports.getcurrencies = async () => {
+  try {
+    const url = `${apiUrl}currencies?apiKey=${apiKey}&compact=ultra`;
+    const response = await axios.get(url);
+    const currencies = JSON.stringify(response.data, null, '\t');
+    fs.writeFileSync('supported-currencies.json', currencies);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        updated: Object.keys((response.data && response.data.results) || {}).length
+      })
+    };
+  } catch (error) {
+    console.error('Unable to refresh currencies', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Unable to refresh currencies'
+      })
+    };
+  }
+};
