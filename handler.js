@@ -4,7 +4,13 @@ const axios = require('axios');
 const fs = require('fs');
 
 const apiUrl = 'https://free.currencyconverterapi.com/api/v6/';
-const apiKey = process.env.CURRENCY_API_KEY || '2c07602b107024c25671';
+const apiKey = process.env.CURRENCY_API_KEY;
+
+const requireApiKey = () => {
+  if (!apiKey) {
+    throw new Error('CURRENCY_API_KEY is not set. Export your currencyconverterapi.com key before running the refresh handlers.');
+  }
+};
 
 const chunk = (items, size) => {
   const chunks = [];
@@ -25,6 +31,7 @@ const fx = async (firstCurrency, secondCurrency = 'NGN') => {
 
 module.exports.getfx = async () => {
   try {
+    requireApiKey();
     const currenciesData = JSON.parse(fs.readFileSync('supported-currencies.json', 'utf8'));
     const currencies = Object.keys(currenciesData.results || {});
     const currencyPairs = chunk(currencies, 2);
@@ -64,6 +71,7 @@ module.exports.getfx = async () => {
 
 module.exports.getcurrencies = async () => {
   try {
+    requireApiKey();
     const url = `${apiUrl}currencies?apiKey=${apiKey}&compact=ultra`;
     const response = await axios.get(url);
     const currencies = JSON.stringify(response.data, null, '\t');
