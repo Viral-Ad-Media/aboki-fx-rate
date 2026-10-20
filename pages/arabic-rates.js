@@ -1,27 +1,39 @@
 import React from 'react'
-import Layout from '../layouts/default'
-import {
-    Container,
-    Header,
-} from 'semantic-ui-react'
+import Layout from '@/components/site/Layout'
+import PageIntro from '@/components/site/PageIntro'
 
 const meta = {
-    title: 'AbokiFxRate - The World"s Trusted Currency Authority سعرالدولاراليم',
-    description: 'سعرالدولاراليم :اضغط لسعر الدلار اليوم اسعر الدولار اليوم لشراء وبيع دولار اسعار الدولار دولار لايف سعر الدولار فى مصر سعر الدولار الان'
+  title: 'سعر الدولار اليوم | AbokiFX Rate',
+  description:
+    'سعرالدولاراليم :اضغط لسعر الدلار اليوم اسعر الدولار اليوم لشراء وبيع دولار اسعار الدولار دولار لايف سعر الدولار فى مصر سعر الدولار الان',
 }
 
-class ArabiRates extends React.Component {
-    render() {
-        return (
-            <Layout meta={meta}>
-                <Container style={{paddingBottom:'50px'}}>
-                    <Header content='سعرالدولاراليم' subheader='سعرالدولاراليم :اضغط لسعر الدلار اليوم اسعر الدولار اليوم لشراء وبيع دولار اسعار الدولار دولار لايف سعر الدولار فى مصر سعر الدولار الان' as='h1' inverted textAlign='right'/>
-                    <h3></h3>
-                    <iframe id="iframe" title='Arabic rates widget' src="https://eldolar.live/ar/widget" width="100%" height="490" frameBorder="0"></iframe><br/>
-                </Container>      
-            </Layout>
-        )
-    }
+export default function ArabicRates() {
+  return (
+    <Layout meta={meta}>
+      <PageIntro
+        lang="ar"
+        dir="rtl"
+        lines={['سعر الدولار', 'اليوم']}
+        lead="أسعار الدولار اليوم للشراء والبيع، مباشرة من eldolar.live. اضغط على أي عملة لمعرفة سعرها الآن."
+      />
+      <section className="frame pb-10" lang="ar" dir="rtl" aria-label="أسعار الدولار">
+        <div className="bg-ground-2 p-2 md:p-4">
+          <iframe
+            id="iframe"
+            title="Arabic rates widget"
+            src="https://eldolar.live/ar/widget"
+            width="100%"
+            height="520"
+            frameBorder="0"
+            loading="lazy"
+            className="block w-full bg-ground-3"
+          />
+        </div>
+        <p className="mt-4 text-[16px] text-ink-soft" lang="en" dir="ltr">
+          Rates on this page are supplied by eldolar.live and shown in Arabic for our readers in Egypt.
+        </p>
+      </section>
+    </Layout>
+  )
 }
-
-export default ArabiRates

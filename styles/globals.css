@@ -1,0 +1,430 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./vendor/shadcn-nova.css" layer(base);
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ */
+/* Theme mapping (shadcn v4)                                            */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-selection: var(--selection);
+  --color-selection-foreground: var(--selection-foreground);
+
+  /* Page tokens from the direction sheet: one ground, one ink, one accent, tone steps */
+  --color-ground: var(--ground);
+  --color-ground-2: var(--ground-2);
+  --color-ground-3: var(--ground-3);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-note-1000: var(--note-1000);
+  --color-note-500: var(--note-500);
+  --color-note-20: var(--note-20);
+  --color-note-10: var(--note-10);
+  --color-note-5: var(--note-5);
+
+  --ease-out: var(--ease-out);
+  --ease-expo: var(--ease-expo);
+  --ease-in-out: var(--ease-in-out);
+  --ease-exit: var(--ease-exit);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tokens                                                               */
+/* ------------------------------------------------------------------ */
+:root {
+  --font-sans: "Switzer", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* The page: kept from the brand. Black ground, warm white ink, AbokiFX orange. */
+  --ground: #0e0f10;
+  --ground-2: #171819;
+  --ground-3: #202224;
+  --ink: #f2f2f0;
+  --ink-soft: #a6a39c;
+  --brand: #f2711c;
+  --brand-ink: #1a0d04;
+
+  /* Field colours for the rate bands: the naira notes. */
+  --note-1000: #7a4b23;
+  --note-500: #2f4f6f;
+  --note-20: #2f6b3a;
+  --note-10: #8c2f2f;
+  --note-5: #f2711c;
+
+  /* Motion tokens (taste-skill motion.md + Emil Kowalski) */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-exit: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --t-press: 160ms; /* release; the press itself is 100ms */
+  --t-hover: 180ms;
+  --t-ui: 240ms;
+  --t-reveal: 800ms;
+  --stagger-line: 110ms;
+  --stagger-item: 70ms;
+
+  /* Type steps from the sheet (Switzer) */
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+
+  /* shadcn semantic tokens, mapped onto the page palette (dark page) */
+  --radius: 0.375rem;
+  --background: var(--ground);
+  --foreground: var(--ink);
+  --card: var(--ground-2);
+  --card-foreground: var(--ink);
+  --popover: var(--ground-3);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-ink);
+  --secondary: var(--ground-3);
+  --secondary-foreground: var(--ink);
+  --muted: var(--ground-3);
+  --muted-foreground: var(--ink-soft);
+  --accent: #2a2c2f;
+  --accent-foreground: var(--ink);
+  --destructive: #d14b4b;
+  --destructive-foreground: var(--ink);
+  --border: #2e3034;
+  --input: #34373b;
+  --ring: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: var(--note-500);
+  --chart-3: var(--note-20);
+  --chart-4: var(--note-1000);
+  --chart-5: var(--note-10);
+  --sidebar: var(--ground-2);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: var(--ground-3);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: #2e3034;
+  --sidebar-ring: var(--brand);
+  --selection: var(--brand);
+  --selection-foreground: var(--brand-ink);
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                 */
+/* ------------------------------------------------------------------ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: var(--step-body);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    font-feature-settings: "ss01", "cv05";
+  }
+
+  ::selection {
+    background: var(--selection);
+    color: var(--selection-foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-wrap: balance;
+    font-weight: 400;
+  }
+
+  img, video {
+    display: block;
+    max-width: 100%;
+  }
+
+  button, [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Page frame                                                           */
+/* ------------------------------------------------------------------ */
+@utility frame {
+  padding-inline: clamp(16px, 2.5vw, 32px);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion layer                                                         */
+/*  - everything is visible without JS (hidden states need html.js)     */
+/*  - transform and opacity only                                        */
+/*  - every move has a reduced-motion fallback                          */
+/* ------------------------------------------------------------------ */
+
+/* Press feedback on anything pressable (Emil: scale 0.97, 100–160ms, ease-out) */
+@layer components {
+  [data-press],
+  [data-slot="button"],
+  [data-slot="tabs-trigger"],
+  [data-slot="switch"] {
+    transition-property: transform, background-color, color, border-color, opacity;
+    transition-duration: var(--t-press), var(--t-hover), var(--t-hover), var(--t-hover), var(--t-hover);
+    transition-timing-function: var(--ease-out), ease, ease, ease, ease;
+  }
+
+  [data-press]:active,
+  [data-slot="button"]:active,
+  [data-slot="tabs-trigger"]:active {
+    transform: scale(0.97);
+    transition-duration: 100ms; /* press snaps, release eases (asymmetric) */
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-press]:active,
+    [data-slot="button"]:active,
+    [data-slot="tabs-trigger"]:active {
+      transform: none;
+    }
+  }
+}
+
+/* Masked line reveal: the signature move, on the hero headline only */
+.lines .line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.lines [data-line] {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .lines [data-line] {
+    transform: translateY(105%);
+    animation: line-up 900ms var(--ease-expo) forwards;
+    animation-delay: calc(var(--i, 0) * var(--stagger-line) + 120ms);
+  }
+  .js [data-load] {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: load-rise 500ms var(--ease-out) forwards;
+    animation-delay: var(--d, 420ms);
+  }
+}
+
+@keyframes line-up {
+  to { transform: none; }
+}
+@keyframes load-rise {
+  to { opacity: 1; transform: none; }
+}
+
+/* Reveal on scroll, once. The parts of a section arrive in reading order. */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] > [data-part],
+  .js [data-reveal][data-part] {
+    opacity: 0;
+    transform: translateY(var(--rise, 20px));
+    transition: opacity 700ms var(--ease-expo), transform 700ms var(--ease-expo);
+    transition-delay: calc(var(--n, 0) * var(--stagger-item));
+  }
+  .js [data-reveal="in"] > [data-part],
+  .js [data-reveal="in"][data-part] {
+    opacity: 1;
+    transform: none;
+  }
+  /* A list arrives row by row from the left */
+  .js [data-reveal][data-manner="rows"] > [data-part] {
+    --rise: 0px;
+    transform: translateX(-16px);
+  }
+  .js [data-reveal="in"][data-manner="rows"] > [data-part] {
+    transform: none;
+  }
+  /* A figure settles from a slight scale */
+  .js [data-reveal][data-manner="settle"] > [data-part] {
+    transform: translateY(8px) scale(0.985);
+    transform-origin: left bottom;
+  }
+  .js [data-reveal="in"][data-manner="settle"] > [data-part] {
+    transform: none;
+  }
+}
+
+/* Hover answers the pointer only where there is one */
+@media (hover: hover) and (pointer: fine) {
+  a[data-link]:hover {
+    color: var(--brand);
+  }
+}
+
+/* Marquee: the rate ticker, linear, pausable, static under reduced motion */
+.ticker {
+  overflow: clip;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent); /* taste-skill-ignore: a mask on the ticker edges, not a fill */
+}
+.ticker__track {
+  display: flex;
+  width: max-content;
+  gap: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ticker__track {
+    animation: ticker 90s linear infinite;
+  }
+  .ticker:hover .ticker__track,
+  .ticker:focus-within .ticker__track {
+    animation-play-state: paused;
+  }
+}
+@keyframes ticker {
+  to { transform: translateX(-50%); }
+}
+
+/* FAQ answer crossfade (150ms) with a 2px blur to bridge the two states */
+.faq-answer {
+  transition: opacity 150ms var(--ease-out), filter 150ms var(--ease-out);
+}
+.faq-answer[data-switching="true"] {
+  opacity: 0;
+  filter: blur(2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-answer { transition: opacity 150ms var(--ease-out); }
+  .faq-answer[data-switching="true"] { filter: none; }
+}
+
+/* Sheet (phone menu): slides in on ease-out, leaves faster; opacity only under reduced motion.
+   Overrides the nova style's 200ms ease-in-out. */
+[data-slot="sheet-content"] {
+  transition-property: transform, opacity;
+  transition-duration: 260ms, 200ms;
+  transition-timing-function: var(--ease-out);
+}
+[data-slot="sheet-content"][data-ending-style] {
+  transition-duration: 180ms, 140ms;
+}
+[data-slot="sheet-overlay"] {
+  transition: opacity 200ms var(--ease-out);
+}
+[data-slot="sheet-overlay"][data-ending-style] {
+  transition-duration: 140ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="sheet-content"] {
+    transition-property: opacity;
+    transform: none !important;
+  }
+}
+/* The menu's links arrive 40ms apart once the panel is in */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-slot="sheet-content"] [data-menu-item] {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: load-rise 320ms var(--ease-out) forwards;
+    animation-delay: calc(var(--i, 0) * 40ms + 80ms);
+  }
+  /* A line that swaps for another on a toggle: short, ease-out, no blank frame */
+  .js [data-swap] {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: load-rise 220ms var(--ease-out) forwards;
+  }
+}
+
+/* Route progress bar (nprogress) */
+#nprogress {
+  pointer-events: none;
+}
+#nprogress .bar {
+  background: var(--brand);
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+}
+#nprogress .peg {
+  display: none;
+}
+
+/* Prismic rich text in articles */
+.prose-article {
+  font-size: var(--step-body);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+.prose-article p { margin-block: 1.1em; }
+.prose-article h2, .prose-article h3 { margin-block: 1.6em 0.6em; font-size: var(--step-lead); }
+.prose-article a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.prose-article img { margin-block: 1.5em; }
+.prose-article ul, .prose-article ol { padding-left: 1.4em; margin-block: 1em; }
+.prose-article li { margin-block: 0.3em; }
+.prose-article blockquote { padding-left: 1em; color: var(--ink-soft); margin-block: 1.4em; }
