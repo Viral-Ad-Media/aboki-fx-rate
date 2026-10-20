@@ -1,92 +1,81 @@
 # AbokiFX Rate
 
-Source for [abokifxrate.com](https://abokifxrate.com), a Naira (NGN) exchange-rate site. It shows live-style mid-market rates for over 150 currencies against the Naira, a currency converter, a Nigerian news section fed from Prismic, and ad / newsletter widgets.
+Source for [abokifxrate.com](https://abokifxrate.com), a naira (NGN) exchange-rate site: a converter that answers as you type, mid-market rates for 155 currencies against the naira, a Nigerian news section fed from Prismic, and an Arabic dollar-rate page.
 
-The app is a server-rendered [Next.js 8](https://nextjs.org/) site served through Express, deployed to AWS Lambda + API Gateway with the Serverless Framework.
+The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, styled with Tailwind CSS 4 and [shadcn/ui](https://ui.shadcn.com/) components (nova style, on Base UI). It deploys to Vercel. The Express server (`server.js`, `index.js`) is kept for the AWS Lambda path and is not used by Vercel.
 
 ## Features
 
-- **Live rate table** (`components/FxComparismWidget.js`): headline rates for EUR, USD, AED, AUD and CAD against NGN.
-- **Currency converter** (`components/conversions/ConversionForm.js`): converts between any two supported currencies. Direct `X_NGN` pairs are used where available, otherwise the rate is derived via NGN as the bridge currency.
-- **Nigerian news** (`pages/nigerian-newspapers/`): a news landing page and article pages. Content comes from the `news` document type in Prismic and is rendered with `prismic-reactjs`. Article pages emit `NewsPosting` JSON-LD for SEO.
-- **Homepage cards and ads** (`pages/index.js`, `components/AdsWidget.js`): driven by the `landing` and `ads` Prismic document types.
-- **Arabic rates page** (`pages/arabic-rates.js`): embeds a third-party widget from eldolar.live.
+- **Converter** (`components/site/Converter.jsx`): any two currencies and an amount. Direct `X_NGN` pairs are used where they exist; otherwise the rate is derived through the naira.
+- **Remittance figure** (`components/site/Remittance.jsx`): a slider from $100 to $10,000 and the naira figure for it.
+- **Headline bands** (`components/site/RateBands.jsx`): USD, EUR, GBP, AED and CAD as full-width bands with a switch that flips the direction of the quote. The on-state colours are the naira notes.
+- **The whole board** (`components/site/CurrencyBoard.jsx`): all 155 currencies by region, quoted as one unit in naira.
+- **Nigerian news** (`pages/nigeriannews-nigeriannewspapers/`): index with pagination and article pages rendered with `@prismicio/react`. Articles emit `NewsArticle` JSON-LD.
+- **Questions** (`components/site/Faq.jsx`): six plain answers about the aboki rate.
+- **Arabic rates** (`pages/arabic-rates.js`): embeds the eldolar.live widget.
 - **Static pages**: about, contact, privacy, cookie policy, legal.
-- **Extras**: Mailchimp subscribe modal, browser notifications, social share buttons, Google Analytics / Tag Manager / AdSense / Facebook Pixel tags (see `components/meta.js`).
+- Google Analytics, Tag Manager, AdSense, Facebook Pixel and Mailchimp tags are loaded in `components/site/Meta.jsx` with `next/script`.
 
 ## Project layout
 
 ```
 .
-├── api/                    # Prismic client helpers (docAPI, newsPostAPI)
-├── components/             # React components (widgets, nav, footer, meta tags)
-│   └── conversions/        # ConversionForm
-├── layouts/                # Page layouts (default, newspaper) and responsive containers
-├── pages/                  # Next.js pages
-│   └── nigerian-newspapers/  # News index + article page
-├── static/                 # Public assets (served at /static/...)
+├── api/                    # Prismic client (docAPI, newsPostAPI) on @prismicio/client
+├── components/
+│   ├── site/               # Page components (Layout, Header, Footer, Hero, Converter, ...)
+│   └── ui/                 # shadcn/ui components (Base UI), owned by this repo
+├── lib/                    # rates.js (rate maths, regions), format.js (number formatting), utils.ts (cn)
+├── pages/                  # Next.js pages (filesystem routing)
+│   └── nigeriannews-nigeriannewspapers/   # index.js and [slug].js
+├── public/static/          # Favicons, manifest, images (served at /static/...)
+├── public/ads.txt          # Served at /ads.txt
+├── styles/
+│   ├── globals.css         # Tailwind, theme tokens, page palette, motion layer
+│   └── vendor/shadcn-nova.css   # shadcn "nova" style sheet, copied from the shadcn registry
 ├── helpers/                # Prismic link resolver
-├── config.js               # Prismic endpoint, news URL slug, default SEO metadata
-├── routes.js               # next-routes definitions (filesystem routing is disabled)
-├── server.js               # Express + Next server for local dev
-├── index.js                # Lambda entry point (wraps server.js with serverless-http)
+├── config.js               # Prismic endpoint, news URL slug, site name, default SEO, Mailchimp URL, socials
+├── server.js, index.js     # Express + serverless-http entry for AWS Lambda (not used on Vercel)
 ├── handler.js              # Lambda functions that refresh fx.json / supported-currencies.json
 ├── fx.json                 # Snapshot of X_NGN rates used by the UI
 ├── supported-currencies.json  # Snapshot of currency codes, names and symbols
-├── serverless.yml          # AWS deployment config
-└── secrets.json            # NODE_ENV and DOMAIN consumed by serverless.yml
+└── serverless.yml          # AWS deployment config
 ```
 
 ## How the data flows
 
-1. **Exchange rates.** The UI does not call any rate API at request time. `FxComparismWidget` and `ConversionForm` `require()` `fx.json` and `supported-currencies.json` directly, so the rates are baked into the bundle at build time.
-2. **Refreshing the snapshots.** `handler.js` exports two Lambda functions:
-   - `getcurrencies` fetches the currency list from `free.currencyconverterapi.com` and writes `supported-currencies.json`.
-   - `getfx` reads that file, queries the same API two pairs at a time (the free tier's limit), and writes `fx.json`.
-   Both can be run locally with Node to regenerate the files before a build (see below).
-3. **CMS content.** `api/index.js` queries the Prismic repository at `config.PRISMIC_API_URL` for the `landing`, `news` and `ads` document types. Page-level data is fetched in `getInitialProps` (server side); widget data is fetched in `componentDidMount` (client side).
+1. **Exchange rates.** The UI does not call a rate API at request time. `lib/rates.js` imports `fx.json` and `supported-currencies.json`, so the rates are baked into the bundle at build time.
+2. **Refreshing the snapshots.** `handler.js` exports `getcurrencies` and `getfx`. Run them locally to regenerate the two JSON files, then commit and redeploy (see below).
+3. **CMS content.** `api/index.js` queries the Prismic repository at `config.PRISMIC_API_URL` for `news` documents in `getInitialProps`. When Prismic cannot be reached the pages render with an empty-state message instead of failing.
 
 ## Routing
 
-Next.js filesystem routing is turned off in `next.config.js` (`useFileSystemPublicRoutes: false`). Every public URL must be registered in `routes.js`:
+Filesystem routing. Public URLs map to files in `pages/`:
 
-| Route name  | URL                                          | Page                            |
-|-------------|----------------------------------------------|---------------------------------|
-| `home`      | `/`                                          | `pages/index.js`                |
-| `about`     | `/about`                                     | `pages/about.js`                |
-| `contact`   | `/contact`                                   | `pages/contact.js`              |
-| `cookie-policy` | `/cookie-policy`                         | `pages/cookie-policy.js`        |
-| `legal`     | `/legal`                                     | `pages/legal.js`                |
-| `privacy`   | `/privacy`                                   | `pages/privacy.js`              |
-| `news-home` | `/nigeriannews-nigeriannewspapers`           | `pages/nigerian-newspapers/index.js` |
-| `news`      | `/nigeriannews-nigeriannewspapers/:slug`     | `pages/nigerian-newspapers/news.js`  |
-| `ads.txt`   | `/ads.txt`                                   | `pages/ads.txt`                 |
+| URL | Page |
+|-----|------|
+| `/` | `pages/index.js` |
+| `/about`, `/contact`, `/privacy`, `/cookie-policy`, `/legal`, `/arabic-rates` | the file of the same name |
+| `/nigeriannews-nigeriannewspapers` | `pages/nigeriannews-nigeriannewspapers/index.js` |
+| `/nigeriannews-nigeriannewspapers/:slug` | `pages/nigeriannews-nigeriannewspapers/[slug].js` |
+| `/ads.txt` | `public/ads.txt` |
 
-The news URL prefix is `config.NEWS_URL`. Use `<Link route="news" params={{ slug }}>` from `routes.js` for internal links.
+The news prefix is `config.NEWS_URL`. Use `next/link` for internal links.
 
 ## Getting started
 
-### Requirements
-
-- Node.js 18 or newer. The `dev` and `build` scripts set `NODE_OPTIONS=--openssl-legacy-provider`, which is required because the Next 8 / webpack 4 toolchain uses hashing algorithms that OpenSSL 3 (Node 17+) disables by default.
-- An AWS profile named `abokifxrate` and the Serverless CLI (`sls`) if you intend to deploy.
-
-### Install and run locally
+Node.js 20 or newer.
 
 ```bash
 npm install
-npm run dev        # starts Express + Next in dev mode on http://localhost:3000
-```
-
-### Production build
-
-```bash
-npm run build      # next build -> .next/
+npm run dev        # next dev on http://localhost:3000
+npm run build      # next build
+npm start          # next start
+npm run server     # the Express server (Lambda path)
 ```
 
 ### Refresh the rate snapshots
 
-Set `CURRENCY_API_KEY` to your [currencyconverterapi.com](https://www.currencyconverterapi.com/) key, then run the two handlers from the repo root (they read and write files relative to the current directory):
+Set `CURRENCY_API_KEY` to your [currencyconverterapi.com](https://www.currencyconverterapi.com/) key, then run the two handlers from the repo root:
 
 ```bash
 export CURRENCY_API_KEY=your_key
@@ -94,41 +83,28 @@ node -e "require('./handler').getcurrencies().then(console.log)"
 node -e "require('./handler').getfx().then(console.log)"
 ```
 
-Commit the updated `supported-currencies.json` and `fx.json`, then rebuild and deploy.
-
-### Deploy
-
-```bash
-npm run deploy     # npm run build && sls deploy --aws-profile abokifxrate
-```
-
-`serverless.yml` deploys to `us-east-1`, reads `NODE_ENV` and `DOMAIN` from `secrets.json`, enables binary responses for all content types (`serverless-apigw-binary`), and maps the custom domain with `serverless-domain-manager` (an ACM certificate for the domain must already exist in `us-east-1`).
-
 ## Configuration reference
 
 | Setting | Where | Notes |
 |---------|-------|-------|
-| `PRISMIC_API_URL` | `config.js` | Prismic CDN endpoint for the CMS content. |
+| `PRISMIC_API_URL` | `config.js` | Prismic CDN endpoint. |
 | `NEWS_URL` | `config.js` | URL prefix for the news section. |
-| `DEFAULT_SEO` | `config.js` | Default title, description, Open Graph and Twitter metadata. |
+| `SITE_NAME`, `DEFAULT_SEO` | `config.js` | Site name and default metadata. |
+| `MAILCHIMP_URL` | `config.js` | The list's form action. Empty by default; the subscribe form on `/contact` stays disabled until it is set. |
+| `SOCIAL` | `config.js` | Facebook and X links. |
 | `CURRENCY_API_KEY` | env var read in `handler.js` | API key for currencyconverterapi.com. |
-| `NODE_ENV`, `DOMAIN` | `secrets.json` | Serverless stage name and custom domain. |
-| Analytics / ad IDs | `components/meta.js` | GA, GTM, AdSense, Facebook Pixel and Mailchimp script tags are hardcoded here. |
+| Analytics / ad IDs | `components/site/Meta.jsx` | GA, GTM, AdSense, Facebook Pixel and Mailchimp script tags. |
 
-## Known issues and review notes
+## Design notes
 
-These were found while reviewing the code and are not yet fixed:
+The page is built to the taste-skill direction "the product performs": the converter is the hero, the five headline currencies are bands in naira-note colours, and the full board sits below. Type is Switzer from Fontshare. Motion is transform and opacity only, with reduced-motion fallbacks; timings and curves are tokens at the top of `styles/globals.css`.
 
-- **`/arabic-rates` is unreachable.** The navbar links to it and `pages/arabic-rates.js` exists, but the route is not registered in `routes.js`, and filesystem routing is disabled, so the URL returns 404.
-- **`helpers/linkResolver` uses the wrong path.** It resolves `news` documents to `/news/:uid`, but the real URL is `/${NEWS_URL}/:uid`. Links inside Prismic rich text that point to news documents will 404.
-- **`/ads.txt` is probably not served.** `pages/ads.txt` is not a JavaScript page, so Next does not build it, and the `routes.js` entry has nothing to render. The file is only reachable at `/static/ads.txt`, which is not where AdSense looks.
-- **The refresh handlers cannot run as deployed.** `getfx` and `getcurrencies` write to the working directory, which is read-only on Lambda. They are also mapped in `serverless.yml` to the same `ANY /` and `ANY /{proxy+}` events as the web server, which conflicts. Treat them as local scripts (see above) until this is reworked.
+## Known issues
+
+- **Stale rates.** `fx.json` is a static snapshot and is years old (EUR_NGN around 403). Refresh it before relying on the figures.
+- **The refresh handlers cannot run as deployed.** They write to the working directory, which is read-only on Lambda. Treat them as local scripts.
 - **Hardcoded API key.** `handler.js` falls back to a committed currencyconverterapi key when `CURRENCY_API_KEY` is unset. Rotate it and remove the fallback.
-- **Stale rates.** `fx.json` is a static snapshot and is years old (for example EUR_NGN is around 403). The homepage says "Over 176 Currencies Supported"; the snapshot contains 156.
-- **Mailchimp form is a placeholder.** `components/MailchimpForm.js` posts to `//xxxx.us13.list-manage.com/...`, so subscriptions do not go anywhere.
-- **Browser notification icon is missing.** `components/WebNotification.js` references `devices-logo.png`, which is not in `static/`.
 - **No tests.** `npm test` exits with an error by design.
-- **Old dependencies.** Next 8, React 16.8, semantic-ui-react 0.85 and `@zeit/next-css` are several major versions behind. Several packages in `dependencies` (`ssri`, `elliptic`, `serialize-javascript`, `yargs-parser`, `node-fetch`) are pinned only to force transitive security fixes. Semantic UI CSS is loaded from a CDN in `components/meta.js`.
 
 ## License
 

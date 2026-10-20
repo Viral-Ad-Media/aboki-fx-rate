@@ -1,7 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/nigeriannews-nigeriannewspapers", "destination": "/nigerian-newspapers" },
-    { "source": "/nigeriannews-nigeriannewspapers/:slug", "destination": "/nigerian-newspapers/news?slug=:slug" },
-    { "source": "/ads.txt", "destination": "/static/ads.txt" }
-  ]
-}

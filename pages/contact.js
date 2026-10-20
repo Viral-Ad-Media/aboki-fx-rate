@@ -1,117 +1,96 @@
-import React from 'react'
-import Layout from '../layouts/default'
-import {
-    Grid,
-    Container,
-    Tab,
-    Header,
-    List,
-    Icon
-} from 'semantic-ui-react'
+import React, { useState } from 'react'
+import Layout from '@/components/site/Layout'
+import PageIntro from '@/components/site/PageIntro'
+import Reveal from '@/components/site/Reveal'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { MAILCHIMP_URL, SOCIAL } from '@/config'
 
 const meta = {
-    title: 'AbokiFxRate - The World"s Trusted Currency Authority',
-    description: 'Index description'
+  title: 'Contact AbokiFX Rate',
+  description: 'How to reach AbokiFX Rate, and where to follow the daily naira rate.',
 }
 
-class ContactPage extends React.Component {
-    constructor(props) {
-        super(props)
-        this.renderGeneralInfo = this.renderGeneralInfo.bind(this)
-    }
+/**
+ * The subscribe form posts straight to Mailchimp's embedded-form endpoint when MAILCHIMP_URL is
+ * set in config.js. Until then it explains what it would do instead of pretending to send.
+ */
+function Subscribe() {
+  const [email, setEmail] = useState('')
+  const live = Boolean(MAILCHIMP_URL)
 
-    renderGeneralInfo() {
-        return (
-            <List relaxed inverted>
-                <List.Item>
-                    <List.Icon name='envelope open outline' size='large' verticalAlign='middle' />
-                    <List.Content>
-                        <List.Header as='a'>Phone: 1 (877) 588-3214</List.Header>
-                    </List.Content>
-                </List.Item>
-                <List.Item>
-                    <List.Icon name='building' size='large' verticalAlign='middle' />
-                    <List.Content>
-                        <List.Header as='a'>7001 Hwy 6 South</List.Header>
-                        <List.Description as='a'> 240 Houston,Texas .77083</List.Description>
-                    </List.Content>
-                </List.Item>
-                <List.Item>
-                    <List.Icon name='clock' size='large' verticalAlign='middle' />
-                    <List.Content>
-                        <List.Header as='a'>9:00 am to 5:00 pm (09h00 - 17h00)</List.Header>
-                        <List.Description as='a'>Eastern Time (New York Time)</List.Description>
-                    </List.Content>
-                </List.Item>
-            </List>
-        )
-    }
-    render() {
-        return (
-            <Layout meta={meta}>
-                <Container style={{ paddingBottom: '50px' }}>
-                    <Header content='Contact Us' subheader='AbokiFX. Powering you.' as='h1' inverted textAlign='center' />
-                    <p style={{ textAlign: 'center' }}>
-                        At AbokiFX, we have a strong commitment to providing quality support. Our multilingual staff can provide support in <br />
-                        English, French, and Spanish. If you have any questions, concerns, or need help, email, phone, or mail us!
-                    </p>
-                </Container>
-                <Container>
-                    <Tab panes={
-                        [
-                            { menuItem: "General AbokiFX Information", render: this.renderGeneralInfo },
-                            { menuItem: "AbokiFX Currency Data", render: this.renderGeneralInfo },
-                        ]
-                    } />
-                </Container>
-                <Container color={'black'} style={{ paddingBottom: '50px' }}>
-                    <Grid celled='internally'>
-                        <Grid.Row columns={2}>
-                            <Grid.Column>
-                                <div style={{ textAlign: 'center' }}>
-                                    <Icon name='globe' size='massive' color={'orange'} />
-                                </div>
-
-                                <Header as='h1' color={'orange'} style={{ fontWeight: 'lighter' }} content='Proudly Serving Our Clients Since 1993' />
-                                <Header as='h2' textAlign='center'>
-                                    <List inverted>
-                                        <List.Item style={{ color: '#fff' }}>World's Trusted Currency Authority</List.Item>
-                                        <List.Item style={{ color: '#fff' }}>280 million visitors a year</List.Item>
-                                        <List.Item style={{ color: '#fff' }}>65 million app downloads</List.Item>
-                                    </List>
-                                </Header>
-                            </Grid.Column>
-                            <Grid.Column>
-                                <div style={{ textAlign: 'center' }}>
-                                    <Icon name='cloud' size='massive' color={'orange'} />
-                                </div>
-
-                                <Header as='h1' color={'orange'} textAlign='center' style={{ fontWeight: 'lighter' }} content='AbokiFxRate Currency Converter' />
-                                <Header as='h2' textAlign='center'>
-                                    <List>
-                                        <List.Item style={{ color: '#fff' }}>Accurate rates for businesses</List.Item>
-                                        <List.Item style={{ color: '#fff' }}>Flexible comparison</List.Item>
-                                        <List.Item style={{ color: '#fff' }}>Simple interface</List.Item>
-                                    </List>
-                                </Header>
-                            </Grid.Column>
-                        </Grid.Row>
-                    </Grid>
-                </Container>
-                <Container>
-                    <Header content='Our Culture' as='h1' textAlign='center' inverted />
-                    <p style={{ textAlign: 'center' }}>
-                        Our culture reflects our philosophy of respect, simplify, and solve. Success is a result of our
-                        talented and dedicated team who live and exemplify our philosophy. The AbokiFX team expects great
-                        things of each other, treat each other well, and are committed to creating the best foreign
-                        exchange solutions for the world. A 40-hour work week with flex time and health benefits,
-                        plus an on-site gym and games room, and catered lunches every Friday supports AbokiFX employees
-                        with a relaxed but fun and motivated atmosphere.
-                    </p>
-                </Container>
-            </Layout>
-        )
-    }
+  return (
+    <form
+      data-ui
+      action={live ? MAILCHIMP_URL : undefined}
+      method="post"
+      target={live ? '_blank' : undefined}
+      onSubmit={event => {
+        if (!live) event.preventDefault()
+      }}
+      className="bg-ground-2 p-6 md:p-8"
+    >
+      <h2 className="text-[clamp(1.5rem,2.6vw,2.5rem)] leading-[1.1]">Get the rate by email</h2>
+      <p className="mt-3 max-w-[40ch] text-[16px] text-ink-soft">
+        One message when the board changes. No marketing, unsubscribe any time.
+      </p>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <label htmlFor="subscribe-email" className="sr-only">
+          Email address
+        </label>
+        <Input
+          id="subscribe-email"
+          type="email"
+          name="EMAIL"
+          required
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={event => setEmail(event.target.value)}
+          className="h-12 flex-1 text-base md:text-base"
+        />
+        <Button type="submit" size="lg" className="h-12 rounded-none" disabled={!live}>
+          {live ? 'Subscribe' : 'Coming soon'}
+        </Button>
+      </div>
+      {!live ? (
+        <p className="mt-3 text-[13px] text-ink-soft">The mailing list is being set up; follow us on X for now.</p>
+      ) : null}
+    </form>
+  )
 }
 
-export default ContactPage
+export default function ContactPage() {
+  return (
+    <Layout meta={meta}>
+      <PageIntro
+        lines={['Talk to us', 'about the rate.']}
+        lead="Questions about a figure on the board, a story in the news section, or a currency you would like us to quote: the quickest way to reach us is on X."
+      />
+      <Reveal as="section" aria-label="Ways to reach AbokiFX Rate" className="frame grid grid-cols-1 gap-10 md:grid-cols-12">
+        <div data-part style={{ '--n': 0 }} className="md:col-span-5">
+          <h2 className="text-[18px] text-ink-soft">Follow the rate</h2>
+          <ul className="mt-4 flex flex-col gap-3 text-[clamp(1.5rem,2.6vw,2.5rem)] leading-[1.1]">
+            <li>
+              <a href={SOCIAL.twitter} data-link target="_blank" rel="noopener noreferrer">
+                X · @AbokifxR
+              </a>
+            </li>
+            <li>
+              <a href={SOCIAL.facebook} data-link target="_blank" rel="noopener noreferrer">
+                Facebook · AbokiFX Rate
+              </a>
+            </li>
+          </ul>
+          <p className="mt-8 max-w-[40ch] text-[16px] text-ink-soft">
+            We publish rates and news only. We do not buy or sell currency, and we cannot quote you a
+            personal rate.
+          </p>
+        </div>
+        <div data-part style={{ '--n': 1 }} className="md:col-span-6 md:col-start-7">
+          <Subscribe />
+        </div>
+      </Reveal>
+    </Layout>
+  )
+}

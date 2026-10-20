@@ -1,5 +1,9 @@
-const withCSS = require('@zeit/next-css')
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: '**.prismic.io' }],
+  },
+}
 
-module.exports = withCSS({
-    useFileSystemPublicRoutes: false
-})
+module.exports = nextConfig

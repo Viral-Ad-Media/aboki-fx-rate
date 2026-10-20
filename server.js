@@ -1,28 +1,28 @@
-const express = require('express');
-const routes = require('./routes')
-const next = require('next');
-const path = require('path')
-
+// Express + Next server for local production runs and the Lambda entry point (index.js).
+// Vercel does not use this file; it serves the Next build directly.
+const express = require('express')
+const next = require('next')
 
 const app = next({ dev: process.env.NODE_ENV !== 'production' })
-const handle = routes.getRequestHandler(app)
-const server = express();
+const handle = app.getRequestHandler()
+const server = express()
 
-server.use('/_next', express.static(path.join(__dirname, '.next')))
 server.use((req, res) => handle(req, res))
 
 if (require.main === module) {
-    app.prepare()
-        .then(() => {
-            server.listen(3000, err => {
-                if (err) throw err;
-                console.log('> Ready http://localhost:3000 <');
-            });
-        })
-        .catch(ex => {
-            console.error(ex.stack);
-            process.exit(1);
-        });
+  const port = process.env.PORT || 3000
+  app
+    .prepare()
+    .then(() => {
+      server.listen(port, err => {
+        if (err) throw err
+        console.log(`> Ready http://localhost:${port} <`)
+      })
+    })
+    .catch(ex => {
+      console.error(ex.stack)
+      process.exit(1)
+    })
 }
 
 module.exports = { app, server }
