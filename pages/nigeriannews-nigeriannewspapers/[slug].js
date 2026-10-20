@@ -20,7 +20,7 @@ const jsonLd = (info, post, url) => ({
   '@context': 'http://schema.org',
   '@type': 'NewsArticle',
   mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  headline: plainText(post.og_title) || plainText(post.title),
+  headline: plainText(post.title) || plainText(post.og_title),
   image: post.og_image && post.og_image.url ? [post.og_image.url] : [],
   datePublished: info.first_publication_date,
   dateModified: info.last_publication_date || info.first_publication_date,
