@@ -2,7 +2,7 @@
 
 Source for [abokifxrate.com](https://abokifxrate.com), a naira (NGN) exchange-rate site: a converter that answers as you type, mid-market rates for 155 currencies against the naira, a Nigerian news section fed from Prismic, and an Arabic dollar-rate page.
 
-The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, styled with Tailwind CSS 4 and [shadcn/ui](https://ui.shadcn.com/) components (nova style, on Base UI). It deploys to Vercel. The Express server (`server.js`, `index.js`) is kept for the AWS Lambda path and is not used by Vercel.
+The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, styled with Tailwind CSS 4 and [shadcn/ui](https://ui.shadcn.com/) components (nova style, on Base UI). It deploys to Vercel from `master`; the custom domain abokifxrate.com points at Vercel's nameservers.
 
 ## Features
 
@@ -34,11 +34,9 @@ The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, st
 │   └── vendor/shadcn-nova.css   # shadcn "nova" style sheet, copied from the shadcn registry
 ├── helpers/                # Prismic link resolver
 ├── config.js               # Prismic endpoint, news URL slug, site name, default SEO, Mailchimp URL, socials
-├── server.js, index.js     # Express + serverless-http entry for AWS Lambda (not used on Vercel)
-├── handler.js              # Lambda functions that refresh fx.json / supported-currencies.json
+├── handler.js              # Local scripts that refresh fx.json / supported-currencies.json
 ├── fx.json                 # Snapshot of X_NGN rates used by the UI
-├── supported-currencies.json  # Snapshot of currency codes, names and symbols
-└── serverless.yml          # AWS deployment config
+└── supported-currencies.json  # Snapshot of currency codes, names and symbols
 ```
 
 ## How the data flows
@@ -70,7 +68,6 @@ npm install
 npm run dev        # next dev on http://localhost:3000
 npm run build      # next build
 npm start          # next start
-npm run server     # the Express server (Lambda path)
 npm test           # vitest run
 ```
 
@@ -107,7 +104,7 @@ The page is built to the taste-skill direction "the product performs": the conve
 ## Known issues
 
 - **Stale rates.** `fx.json` is a static snapshot and is years old (EUR_NGN around 403). Refresh it before relying on the figures.
-- **The refresh handlers cannot run as deployed.** They write to the working directory, which is read-only on Lambda. Treat them as local scripts.
+- **The refresh handlers are local scripts.** They write `fx.json` and `supported-currencies.json` to the working directory; run them locally with `CURRENCY_API_KEY` set, then commit the result.
 
 ## License
 
