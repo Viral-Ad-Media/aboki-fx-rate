@@ -71,7 +71,12 @@ npm run dev        # next dev on http://localhost:3000
 npm run build      # next build
 npm start          # next start
 npm run server     # the Express server (Lambda path)
+npm test           # vitest run
 ```
+
+### Tests
+
+Tests live in `tests/` and run with [Vitest](https://vitest.dev). They cover the rate maths and formatting in `lib/`, the Prismic link resolver, the two snapshot-refresh handlers (with the API and filesystem stubbed), and the converter component. `npm run test:watch` re-runs on change. The `Build and test` GitHub Actions workflow runs `npm test` and `npm run build` on every pull request and on pushes to `master`.
 
 ### Refresh the rate snapshots
 
@@ -103,7 +108,6 @@ The page is built to the taste-skill direction "the product performs": the conve
 
 - **Stale rates.** `fx.json` is a static snapshot and is years old (EUR_NGN around 403). Refresh it before relying on the figures.
 - **The refresh handlers cannot run as deployed.** They write to the working directory, which is read-only on Lambda. Treat them as local scripts.
-- **No tests.** `npm test` exits with an error by design.
 
 ## License
 
