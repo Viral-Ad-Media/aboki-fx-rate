@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Reveal from './Reveal'
-import { currencyCount } from '@/lib/rates'
+import { useRates } from './RatesContext'
 
-const QUESTIONS = [
+const questions = currencyCount => [
   {
     q: 'What is the aboki rate?',
     a: 'The rate quoted by the street bureau-de-change traders Nigerians call abokis. It is the parallel-market price of foreign currency in naira, and it usually sits above the official bank rate.',
   },
   {
     q: 'Where do these rates come from?',
-    a: `A currency data feed, refreshed by our rate job and stored as a snapshot. Every one of the ${currencyCount} currencies is quoted as the mid-market price of one unit in naira.`,
+    a: `A live currency data feed, fetched by our server and refreshed every hour. Every one of the ${currencyCount} currencies is quoted as the mid-market price of one unit in naira.`,
   },
   {
     q: 'Why is my bank quoting something different?',
@@ -17,7 +17,7 @@ const QUESTIONS = [
   },
   {
     q: 'How often does the board change?',
-    a: 'Whenever the snapshot is refreshed and the site is rebuilt. The board is not a live tick-by-tick quote; treat it as the day’s reference.',
+    a: 'The page picks up the latest rates every hour, and the feed itself updates daily. It is not a live tick-by-tick quote; treat it as the day’s reference.',
   },
   {
     q: 'Can I convert between two foreign currencies?',
@@ -36,6 +36,8 @@ const QUESTIONS = [
  * On a phone the tapped question opens its answer directly beneath it.
  */
 export default function Faq() {
+  const { currencyCount } = useRates()
+  const list = questions(currencyCount)
   const [index, setIndex] = useState(0)
   const [switching, setSwitching] = useState(false)
   const [shown, setShown] = useState(0)
@@ -58,7 +60,7 @@ export default function Faq() {
           Common questions
         </h2>
         <ul className="mt-[18px] flex flex-col gap-[18px]" role="list">
-          {QUESTIONS.map((item, i) => {
+          {list.map((item, i) => {
             const selected = i === index
             return (
               <li key={item.q}>
@@ -103,7 +105,7 @@ export default function Faq() {
             data-switching={switching}
             aria-live="polite"
           >
-            {QUESTIONS[shown].a}
+            {list[shown].a}
           </p>
         </div>
       </div>

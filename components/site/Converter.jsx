@@ -3,7 +3,9 @@ import { ArrowLeftRightIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CurrencyPicker from './CurrencyPicker'
-import { rate, currencyName, HOME } from '@/lib/rates'
+import { currencyName, HOME } from '@/lib/rates'
+import { formatUpdated } from '@/lib/format'
+import { useRates } from './RatesContext'
 import { formatAmount } from '@/lib/format'
 
 const parse = text => {
@@ -16,12 +18,13 @@ const parse = text => {
  * The result updates on every keystroke with no animation; typing is a hundreds-a-day action.
  */
 export default function Converter({ id = 'converter' }) {
+  const { rate, updatedAt } = useRates()
   const [from, setFrom] = useState('USD')
   const [to, setTo] = useState(HOME)
   const [amount, setAmount] = useState('100')
 
   const value = parse(amount)
-  const fromTo = useMemo(() => rate(from, to), [from, to])
+  const fromTo = useMemo(() => rate(from, to), [rate, from, to])
   const toFrom = fromTo ? 1 / fromTo : null
   const result = fromTo === null ? null : value * fromTo
 
@@ -93,7 +96,8 @@ export default function Converter({ id = 'converter' }) {
           </div>
         </dl>
         <p className="mt-4 max-w-[52ch] text-[13px] text-ink-soft">
-          Mid-market rates, for information only. Banks and bureaux de change quote a spread on top.
+          Mid-market rates{updatedAt ? `, updated ${formatUpdated(updatedAt)}` : ''}, for information only. Banks
+          and bureaux de change quote a spread on top.
         </p>
       </div>
     </section>

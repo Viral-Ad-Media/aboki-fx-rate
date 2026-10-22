@@ -1,6 +1,6 @@
 import React from 'react'
 import Converter from './Converter'
-import { currencyCount } from '@/lib/rates'
+import { useRates } from './RatesContext'
 
 /**
  * Hero, direction "the product performs": a short left-aligned headline, one sentence, and the
@@ -8,6 +8,7 @@ import { currencyCount } from '@/lib/rates'
  * Signature move: the two headline lines rise from behind their baselines on load.
  */
 export default function Hero() {
+  const { currencyCount } = useRates()
   return (
     <section className="frame grid grid-cols-1 gap-10 pb-20 pt-10 lg:grid-cols-12 lg:gap-6 lg:pb-28 lg:pt-16" aria-labelledby="hero-title">
       <div className="lg:col-span-5">

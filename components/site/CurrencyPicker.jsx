@@ -7,13 +7,14 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@/components/ui/combobox'
-import { currencyOptions } from '@/lib/rates'
+import { useRates } from './RatesContext'
 
 /**
  * One searchable currency control. 156 currencies, typed to filter; the value is the ISO code.
  * Shown inside the converter fragment (data-ui), so shadcn's own borders and radii apply.
  */
 export default function CurrencyPicker({ id, label, value, onChange }) {
+  const { currencyOptions } = useRates()
   const selected = currencyOptions.find(option => option.value === value) || null
 
   return (

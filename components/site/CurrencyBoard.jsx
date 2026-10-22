@@ -1,11 +1,9 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import Reveal from './Reveal'
-import { boardByRegion, currencyCount } from '@/lib/rates'
+import { useRates } from './RatesContext'
 import { formatAmount } from '@/lib/format'
-
-const groups = boardByRegion()
 
 /**
  * List blueprint "Day tabs, banded agenda", with the whole rate board as its content:
@@ -13,6 +11,8 @@ const groups = boardByRegion()
  * blocks; the region's currencies on the right as alternating tone bands.
  */
 export default function CurrencyBoard() {
+  const { boardByRegion, currencyCount } = useRates()
+  const groups = useMemo(() => boardByRegion(), [boardByRegion])
   const [region, setRegion] = useState(groups[0].region)
 
   return (

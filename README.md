@@ -41,8 +41,8 @@ The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, st
 
 ## How the data flows
 
-1. **Exchange rates.** The UI does not call a rate API at request time. `lib/rates.js` imports `fx.json` and `supported-currencies.json`, so the rates are baked into the bundle at build time.
-2. **Refreshing the snapshots.** `handler.js` exports `getcurrencies` and `getfx`. Run them locally to regenerate the two JSON files, then commit and redeploy (see below).
+1. **Exchange rates.** `lib/liveRates.js` fetches the latest naira rates on the server from free, keyless feeds: [open.er-api.com](https://www.exchangerate-api.com/docs/free) first, then [fawazahmed0/currency-api](https://github.com/fawazahmed0/exchange-api) if that fails. Results are cached in memory for 30 minutes. The home and about pages call it in `getStaticProps` with `revalidate: 3600`, so Vercel regenerates them in the background at most hourly, and `_app.js` hands the rates to every rate component through `RatesProvider` (`components/site/RatesContext.jsx`). The converter shows when the feed last published.
+2. **Fallback snapshot.** If every feed fails and no earlier result is cached, the UI uses the committed `fx.json`. `handler.js` exports `getcurrencies` and `getfx`, which regenerate `supported-currencies.json` and `fx.json` (see below). Currency names and symbols always come from `supported-currencies.json`; a live currency missing from it is not shown.
 3. **CMS content.** `api/index.js` queries the Prismic repository at `config.PRISMIC_API_URL` for `news` documents in `getInitialProps`. When Prismic cannot be reached the pages render with an empty-state message instead of failing.
 
 ## Routing
@@ -103,7 +103,8 @@ The page is built to the taste-skill direction "the product performs": the conve
 
 ## Known issues
 
-- **Stale rates.** `fx.json` is a static snapshot and is years old (EUR_NGN around 403). Refresh it before relying on the figures.
+- **Old fallback snapshot.** `fx.json` is years old (EUR_NGN around 403). It is only shown when every live feed is down, but refreshing it would make that fallback less wrong.
+- **Mid-market, not parallel market.** The live feeds publish the official mid-market rate, which can sit well below the street (aboki) rate.
 - **The refresh handlers are local scripts.** They write `fx.json` and `supported-currencies.json` to the working directory; run them locally with `CURRENCY_API_KEY` set, then commit the result.
 
 ## License

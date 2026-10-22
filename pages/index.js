@@ -8,6 +8,7 @@ import CurrencyBoard from '@/components/site/CurrencyBoard'
 import NewsSection from '@/components/site/NewsSection'
 import Faq from '@/components/site/Faq'
 import { docAPI } from '@/api'
+import { getLiveRates, REVALIDATE_SECONDS } from '@/lib/liveRates'
 
 const meta = {
   title: 'AbokiFX Rate | Your daily Naira exchange rate',
@@ -29,7 +30,12 @@ export default function Home({ posts }) {
   )
 }
 
-Home.getInitialProps = async () => {
-  const response = await docAPI({ pageSize: 3 }, 'news')
-  return { posts: (response && response.results) || [] }
+// Regenerated in the background at most every REVALIDATE_SECONDS, so visitors get a cached page
+// with rates (and headlines) no older than that.
+export async function getStaticProps() {
+  const [response, rates] = await Promise.all([docAPI({ pageSize: 3 }, 'news'), getLiveRates()])
+  return {
+    props: { posts: (response && response.results) || [], rates },
+    revalidate: REVALIDATE_SECONDS,
+  }
 }

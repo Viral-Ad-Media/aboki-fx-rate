@@ -1,5 +1,6 @@
 import React from 'react'
-import { HEADLINE, codes, currencyName, rateToNGN } from '@/lib/rates'
+import { HEADLINE, currencyName } from '@/lib/rates'
+import { useRates } from './RatesContext'
 import { formatAmount } from '@/lib/format'
 
 /**
@@ -7,6 +8,7 @@ import { formatAmount } from '@/lib/format'
  * Constant motion is linear; it pauses on hover and focus and stands still under reduced motion.
  */
 export default function Ticker({ className = '' }) {
+  const { codes, rateToNGN } = useRates()
   const picks = [...HEADLINE, 'CNY', 'ZAR', 'GHS', 'INR', 'JPY', 'CHF', 'SAR', 'KES', 'XOF', 'EGP']
     .filter(code => codes.includes(code))
   const items = picks.map(code => ({ code, name: currencyName(code), ngn: rateToNGN(code) }))

@@ -3,6 +3,7 @@ import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import Converter from '@/components/site/Converter'
+import { RatesProvider } from '@/components/site/RatesContext'
 import { rate } from '@/lib/rates'
 import { formatAmount } from '@/lib/format'
 
@@ -60,5 +61,21 @@ describe('Converter', () => {
     fireEvent.change(screen.getByLabelText('To'), { target: { value: 'EUR' } })
     const result = screen.getByText(/^100\.00 USD is$/).nextElementSibling
     expect(result).toHaveTextContent(`${formatAmount(100 * rate('USD', 'EUR'))} EUR`)
+  })
+
+  it('uses the live rates from RatesProvider and says when they were published', () => {
+    const live = {
+      results: { USD_NGN: { val: 1500 }, EUR_NGN: { val: 1700 }, GBP_NGN: { val: 2000 } },
+      updatedAt: '2026-10-22T00:02:01.000Z',
+      source: 'test',
+    }
+    render(
+      <RatesProvider live={live}>
+        <Converter />
+      </RatesProvider>
+    )
+    const result = screen.getByText(/^100\.00 USD is$/).nextElementSibling
+    expect(result).toHaveTextContent(`${formatAmount(150000)} NGN`)
+    expect(screen.getByText(/updated 22 Oct 2026, 00:02 UTC/)).toBeInTheDocument()
   })
 })
