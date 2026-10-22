@@ -7,7 +7,6 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const axios = require('axios')
 const fs = require('fs')
-const actualRead = fs.readFileSync
 
 const load = async () => {
   vi.resetModules()
@@ -33,15 +32,6 @@ describe('refresh handlers', () => {
   describe('without CURRENCY_API_KEY', () => {
     beforeEach(() => {
       delete process.env.CURRENCY_API_KEY
-    })
-
-    it('getfx fails with a 500 and calls nothing', async () => {
-      const { axios, fs, handler } = await load()
-      const result = await handler.getfx()
-      expect(result.statusCode).toBe(500)
-      expect(JSON.parse(result.body)).toEqual({ error: 'Unable to refresh fx rates' })
-      expect(axios.get).not.toHaveBeenCalled()
-      expect(fs.writeFileSync).not.toHaveBeenCalled()
     })
 
     it('getcurrencies fails with a 500 and calls nothing', async () => {
@@ -73,49 +63,47 @@ describe('refresh handlers', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith('supported-currencies.json', JSON.stringify(data, null, '\t'))
     })
 
-    it('getfx queries currencies in pairs against the naira and merges the results', async () => {
-      const { axios, fs, handler } = await load()
-      fs.readFileSync.mockImplementation((path, ...rest) => {
-        if (path === 'supported-currencies.json') {
-          return JSON.stringify({ results: { USD: {}, EUR: {}, GBP: {} } })
-        }
-        return actualRead(path, ...rest)
-      })
-      axios.get.mockImplementation(async url => {
-        const q = decodeURIComponent(new URL(url).searchParams.get('q'))
-        const results = {}
-        q.split(',').forEach(pair => {
-          results[pair] = { id: pair, val: pair === 'USD_NGN' ? 360 : pair === 'EUR_NGN' ? 400 : 1, fr: pair.split('_')[0], to: 'NGN' }
-        })
-        return { data: { results } }
-      })
+  })
+
+  // getfx needs no key: it writes the snapshot from the same keyless feeds the site fetches live.
+  describe('getfx', () => {
+    const feed = (rates, extra = {}) => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ result: 'success', time_last_update_unix: 1_700_000_000, rates, ...extra }),
+    })
+
+    it('writes the live rates to fx.json with their date and source', async () => {
+      delete process.env.CURRENCY_API_KEY
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(feed({ USD: 1 / 1500, EUR: 1 / 1700, GBP: 1 / 2000, NGN: 1 })))
+      const { fs, handler } = await load()
 
       const result = await handler.getfx()
 
       expect(result.statusCode).toBe(200)
-      expect(axios.get).toHaveBeenCalledTimes(2)
-      expect(axios.get.mock.calls.map(c => decodeURIComponent(new URL(c[0]).searchParams.get('q')))).toEqual([
-        'USD_NGN,EUR_NGN',
-        'GBP_NGN,NGN_NGN',
-      ])
-
+      expect(JSON.parse(result.body)).toEqual({ updated: 4, source: 'Exchange Rate API' })
       const [file, contents] = fs.writeFileSync.mock.calls[0]
       expect(file).toBe('fx.json')
       const written = JSON.parse(contents)
-      expect(written.results.USD_NGN.val).toBe(360)
-      expect(written.results.EUR_NGN.val).toBe(400)
+      expect(written.results.USD_NGN.val).toBeCloseTo(1500, 6)
+      expect(written.results.EUR_NGN.val).toBeCloseTo(1700, 6)
       expect(Object.keys(written.results).sort()).toEqual(['EUR_NGN', 'GBP_NGN', 'NGN_NGN', 'USD_NGN'])
-      expect(JSON.parse(result.body)).toEqual({ updated: 4 })
+      expect(written.updatedAt).toBe(1_700_000_000_000)
+      expect(written.source).toBe('Exchange Rate API')
+      expect(axios.get).not.toHaveBeenCalled()
+      vi.unstubAllGlobals()
     })
 
-    it('getfx returns a 500 and leaves fx.json alone when the API fails', async () => {
-      const { axios, fs, handler } = await load()
-      axios.get.mockRejectedValue(new Error('boom'))
+    it('returns a 500 and leaves fx.json alone when no feed answers', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')))
+      const { fs, handler } = await load()
 
       const result = await handler.getfx()
 
       expect(result.statusCode).toBe(500)
+      expect(JSON.parse(result.body)).toEqual({ error: 'Unable to refresh fx rates' })
       expect(fs.writeFileSync).not.toHaveBeenCalled()
+      vi.unstubAllGlobals()
     })
   })
 })

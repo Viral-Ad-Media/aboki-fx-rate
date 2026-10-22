@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import Reveal from './Reveal'
-import { HEADLINE, currencyName, currencySymbol, rateToNGN } from '@/lib/rates'
+import { useRates } from '@/lib/rates-context'
 import { formatAmount } from '@/lib/format'
 
 // Field colours are the naira notes: ₦1000 brown, ₦500 blue, ₦20 green, ₦10 red, ₦5 orange.
@@ -18,6 +18,7 @@ const article = name => (/^(euro|[AEIOU][a-z])/.test(name) ? 'an' : 'a')
  * consequence in figures beneath. Two bands are on at load.
  */
 export default function RateBands() {
+  const { HEADLINE, currencyName, currencySymbol, rateToNGN } = useRates()
   const [on, setOn] = useState(() => new Set(['USD', 'GBP']))
 
   const toggle = code => {

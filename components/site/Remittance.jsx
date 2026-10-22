@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Slider } from '@/components/ui/slider'
 import Reveal from './Reveal'
-import { rateToNGN } from '@/lib/rates'
+import { useRates } from '@/lib/rates-context'
 import { formatAmount, formatCompact } from '@/lib/format'
 
 const MIN = 100
@@ -14,6 +14,7 @@ const STEP = 50
  * working-out sentence on its baseline at the right. The figure recalculates on every input.
  */
 export default function Remittance() {
+  const { rateToNGN } = useRates()
   const [usd, setUsd] = useState(1000)
   const usdRate = rateToNGN('USD')
   const naira = usdRate ? usd * usdRate : null

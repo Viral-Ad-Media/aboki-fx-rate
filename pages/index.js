@@ -8,6 +8,7 @@ import CurrencyBoard from '@/components/site/CurrencyBoard'
 import NewsSection from '@/components/site/NewsSection'
 import Faq from '@/components/site/Faq'
 import { docAPI } from '@/api'
+import { ratesForPage } from '@/lib/rates-props'
 
 const meta = {
   title: 'AbokiFX Rate | Your daily Naira exchange rate',
@@ -29,7 +30,13 @@ export default function Home({ posts }) {
   )
 }
 
-Home.getInitialProps = async () => {
-  const response = await docAPI({ pageSize: 3 }, 'news')
-  return { posts: (response && response.results) || [] }
+// Built once, then regenerated in the background after `revalidate` seconds (ISR on Vercel),
+// so the rates and the latest posts stay current without a redeploy. If the rate feeds are
+// down the page falls back to the committed snapshot and retries sooner.
+export async function getStaticProps() {
+  const [response, { fx, revalidate }] = await Promise.all([docAPI({ pageSize: 3 }, 'news'), ratesForPage()])
+  return {
+    props: { posts: (response && response.results) || [], fx },
+    revalidate,
+  }
 }

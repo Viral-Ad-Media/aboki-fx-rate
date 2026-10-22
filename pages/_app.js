@@ -4,6 +4,7 @@ import Router from 'next/router'
 import NProgress from 'nprogress'
 import '@/styles/globals.css'
 import { DEFAULT_SEO } from '@/config'
+import { RatesProvider } from '@/lib/rates-context'
 
 NProgress.configure({ showSpinner: false, trickleSpeed: 120, minimum: 0.2 })
 
@@ -38,7 +39,9 @@ export default function App({ Component, pageProps }) {
         <meta key="og:image:height" property="og:image:height" content={String(DEFAULT_SEO.openGraph.imageHeight)} />
         <meta key="og:locale" property="og:locale" content={DEFAULT_SEO.openGraph.locale} />
       </Head>
-      <Component {...pageProps} />
+      <RatesProvider fx={pageProps.fx}>
+        <Component {...pageProps} />
+      </RatesProvider>
     </>
   )
 }

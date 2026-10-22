@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { NEWS_URL, SITE_NAME, SOCIAL } from '@/config'
 import { NAV } from './Header'
+import { useRates } from '@/lib/rates-context'
 
 function LagosTime() {
   const [time, setTime] = useState('')
@@ -30,6 +31,7 @@ function LagosTime() {
  * A footer of tiles: the last two rows of a board. Every cell used, 8px gaps, flat fills.
  */
 export default function Footer() {
+  const { source, sourceUrl } = useRates()
   const year = new Date().getFullYear()
   const tile = 'flex flex-col justify-between p-5 bg-ground-2'
 
@@ -43,6 +45,16 @@ export default function Footer() {
           </p>
           <p className="text-[length:var(--step-small)] text-ink-soft">
             {SITE_NAME} © {year}. Mid-market rates for information only.
+            {sourceUrl ? (
+              <>
+                {' '}
+                Rates by{' '}
+                <a href={sourceUrl} data-link target="_blank" rel="noopener noreferrer">
+                  {source}
+                </a>
+                .
+              </>
+            ) : null}
           </p>
         </div>
 

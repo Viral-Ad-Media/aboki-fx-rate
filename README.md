@@ -24,7 +24,7 @@ The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, st
 ├── components/
 │   ├── site/               # Page components (Layout, Header, Footer, Hero, Converter, ...)
 │   └── ui/                 # shadcn/ui components (Base UI), owned by this repo
-├── lib/                    # rates.js (rate maths, regions), format.js (number formatting), utils.ts (cn)
+├── lib/                    # rates.js (rate maths, regions), live-rates.js (feeds), rates-context.jsx, rates-props.js, format.js, utils.ts
 ├── pages/                  # Next.js pages (filesystem routing)
 │   └── nigeriannews-nigeriannewspapers/   # index.js and [slug].js
 ├── public/static/          # Favicons, manifest, images (served at /static/...)
@@ -35,15 +35,16 @@ The app is a [Next.js 16](https://nextjs.org/) Pages Router site on React 19, st
 ├── helpers/                # Prismic link resolver
 ├── config.js               # Prismic endpoint, news URL slug, site name, default SEO, Mailchimp URL, socials
 ├── handler.js              # Local scripts that refresh fx.json / supported-currencies.json
-├── fx.json                 # Snapshot of X_NGN rates used by the UI
+├── fx.json                 # Fallback snapshot of X_NGN rates, used when the feeds are down
 └── supported-currencies.json  # Snapshot of currency codes, names and symbols
 ```
 
 ## How the data flows
 
-1. **Exchange rates.** The UI does not call a rate API at request time. `lib/rates.js` imports `fx.json` and `supported-currencies.json`, so the rates are baked into the bundle at build time.
-2. **Refreshing the snapshots.** `handler.js` exports `getcurrencies` and `getfx`. Run them locally to regenerate the two JSON files, then commit and redeploy (see below).
-3. **CMS content.** `api/index.js` queries the Prismic repository at `config.PRISMIC_API_URL` for `news` documents in `getInitialProps`. When Prismic cannot be reached the pages render with an empty-state message instead of failing.
+1. **Exchange rates.** The home and about pages fetch the latest naira rates in `getStaticProps` (`lib/rates-props.js` → `lib/live-rates.js`) and are regenerated in the background every hour (ISR), so the figures stay current without a redeploy. Two keyless public feeds are tried in order: [Exchange Rate API](https://www.exchangerate-api.com) (open endpoint, attributed in the footer) and [currency-api](https://github.com/fawazahmed0/exchange-api) on jsDelivr. Both quote one naira in every other currency; `lib/live-rates.js` inverts that into the `X_NGN` pairs the site has always used and keeps only currencies named in `supported-currencies.json`.
+2. **Snapshot fallback.** When no feed answers, the page is built from the committed `fx.json` and retried after five minutes. `lib/rates.js` exports `createRates(pairs)` and the snapshot; `lib/rates-context.jsx` hands whichever set the page fetched to the components through `useRates()`, with the snapshot as the default outside a provider (so tests and static pages still work).
+3. **Refreshing the snapshot.** `handler.js` exports `getfx`, which writes `fx.json` from the same feeds (no key needed), and `getcurrencies`, which refreshes the currency names from currencyconverterapi.com (needs a key).
+4. **CMS content.** `api/index.js` queries the Prismic repository at `config.PRISMIC_API_URL` for `news` documents in `getInitialProps`. When Prismic cannot be reached the pages render with an empty-state message instead of failing.
 
 ## Routing
 
@@ -73,16 +74,16 @@ npm test           # vitest run
 
 ### Tests
 
-Tests live in `tests/` and run with [Vitest](https://vitest.dev). They cover the rate maths and formatting in `lib/`, the Prismic link resolver, the two snapshot-refresh handlers (with the API and filesystem stubbed), and the converter component. `npm run test:watch` re-runs on change. The `Build and test` GitHub Actions workflow runs `npm test` and `npm run build` on every pull request and on pushes to `master`.
+Tests live in `tests/` and run with [Vitest](https://vitest.dev). They cover the rate maths, live-rate parsing, rates context and formatting in `lib/`, the Prismic link resolver, the two snapshot-refresh handlers (with the API and filesystem stubbed), and the converter component. `npm run test:watch` re-runs on change. The `Build and test` GitHub Actions workflow runs `npm test` and `npm run build` on every pull request and on pushes to `master`.
 
-### Refresh the rate snapshots
+### Refresh the snapshots
 
-Set `CURRENCY_API_KEY` to your [currencyconverterapi.com](https://www.currencyconverterapi.com/) key, then run the two handlers from the repo root:
+The live pages do not need this; it only updates the committed fallback. From the repo root:
 
 ```bash
-export CURRENCY_API_KEY=your_key
-node -e "require('./handler').getcurrencies().then(console.log)"
-node -e "require('./handler').getfx().then(console.log)"
+node -e "require('./handler').getfx().then(console.log)"          # fx.json, no key needed
+export CURRENCY_API_KEY=your_key                                   # currencyconverterapi.com key
+node -e "require('./handler').getcurrencies().then(console.log)"  # supported-currencies.json
 ```
 
 ## Configuration reference
@@ -94,7 +95,7 @@ node -e "require('./handler').getfx().then(console.log)"
 | `SITE_NAME`, `DEFAULT_SEO` | `config.js` | Site name and default metadata. |
 | `MAILCHIMP_URL` | `config.js` | The list's form action. Empty by default; the subscribe form on `/contact` stays disabled until it is set. |
 | `SOCIAL` | `config.js` | Facebook and X links. |
-| `CURRENCY_API_KEY` | env var read in `handler.js` | API key for currencyconverterapi.com. |
+| `CURRENCY_API_KEY` | env var read in `handler.js` | currencyconverterapi.com key, only for `getcurrencies`. |
 | Analytics / ad IDs | `components/site/Meta.jsx` | GA, GTM, AdSense, Facebook Pixel and Mailchimp script tags. |
 
 ## Design notes
