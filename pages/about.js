@@ -6,14 +6,15 @@ import Reveal from '@/components/site/Reveal'
 import Ticker from '@/components/site/Ticker'
 import { Button } from '@/components/ui/button'
 import { NEWS_URL } from '@/config'
-import { currencyCount, HEADLINE } from '@/lib/rates'
+import { useRates } from '@/lib/rates-context'
+import { ratesForPage } from '@/lib/rates-props'
 
 const meta = {
   title: 'About AbokiFX Rate',
   description: 'What AbokiFX Rate is, where its naira exchange rates come from, and how to use the converter.',
 }
 
-const CLAIMS = [
+const claimsFor = (currencyCount, HEADLINE) => [
   {
     title: 'One board, every currency',
     body: `${currencyCount} currencies, each quoted as the mid-market price of one unit in naira. The five Nigerians ask for most, ${HEADLINE.join(', ')}, sit on the home page as bands you can flip.`,
@@ -33,6 +34,8 @@ const CLAIMS = [
 ]
 
 export default function AboutPage() {
+  const { currencyCount, HEADLINE } = useRates()
+  const CLAIMS = claimsFor(currencyCount, HEADLINE)
   return (
     <Layout meta={meta}>
       <PageIntro
@@ -68,4 +71,9 @@ export default function AboutPage() {
       </Reveal>
     </Layout>
   )
+}
+
+export async function getStaticProps() {
+  const { fx, revalidate } = await ratesForPage()
+  return { props: { fx }, revalidate }
 }

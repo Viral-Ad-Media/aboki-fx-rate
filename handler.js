@@ -2,60 +2,36 @@
 
 const axios = require('axios');
 const fs = require('fs');
+const { fetchLiveRates } = require('./lib/live-rates');
 
 const apiUrl = 'https://free.currencyconverterapi.com/api/v6/';
 const apiKey = process.env.CURRENCY_API_KEY;
 
 const requireApiKey = () => {
   if (!apiKey) {
-    throw new Error('CURRENCY_API_KEY is not set. Export your currencyconverterapi.com key before running the refresh handlers.');
+    throw new Error('CURRENCY_API_KEY is not set. Export your currencyconverterapi.com key before running getcurrencies.');
   }
 };
 
-const chunk = (items, size) => {
-  const chunks = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-};
-
-const fx = async (firstCurrency, secondCurrency = 'NGN') => {
-  const encodeFirstCurrency = encodeURIComponent(`${firstCurrency}_NGN`);
-  const encodeSecondCurrency = encodeURIComponent(`${secondCurrency}_NGN`);
-  const query = `${encodeFirstCurrency},${encodeSecondCurrency}`;
-  const url = `${apiUrl}convert?q=${query}&apiKey=${apiKey}`;
-  const response = await axios.get(url);
-  return response.data && response.data.results ? response.data.results : {};
-};
-
+/**
+ * Refresh the committed fx.json snapshot from the same keyless feeds the site fetches live
+ * (lib/live-rates.js). The snapshot is only the fallback for when no feed answers, so this
+ * needs no API key.
+ */
 module.exports.getfx = async () => {
   try {
-    requireApiKey();
-    const currenciesData = JSON.parse(fs.readFileSync('supported-currencies.json', 'utf8'));
-    const currencies = Object.keys(currenciesData.results || {});
-    const currencyPairs = chunk(currencies, 2);
-
-    const conversionResults = await Promise.all(
-      currencyPairs.slice(0, 100).map(async pair => {
-        const [firstCurrency, secondCurrency = 'NGN'] = pair;
-        return fx(firstCurrency, secondCurrency);
-      })
-    );
-
-    const fxCollection = conversionResults.reduce((accumulator, currentValue) => {
-      Object.entries(currentValue || {}).forEach(([key, value]) => {
-        accumulator.results[key] = value;
-      });
-      return accumulator;
-    }, { results: {} });
-
-    fs.writeFileSync('fx.json', JSON.stringify(fxCollection, null, '\t'));
+    const live = await fetchLiveRates();
+    if (!live) {
+      throw new Error('No rate feed answered');
+    }
+    const snapshot = { results: live.results, updatedAt: live.updatedAt, source: live.source };
+    fs.writeFileSync('fx.json', JSON.stringify(snapshot, null, '\t'));
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        updated: Object.keys(fxCollection.results).length
+        updated: Object.keys(live.results).length,
+        source: live.source
       })
     };
   } catch (error) {

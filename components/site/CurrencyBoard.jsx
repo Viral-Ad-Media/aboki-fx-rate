@@ -1,11 +1,10 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import Reveal from './Reveal'
-import { boardByRegion, currencyCount } from '@/lib/rates'
+import { useRates } from '@/lib/rates-context'
+import { formatUpdated } from '@/lib/format'
 import { formatAmount } from '@/lib/format'
-
-const groups = boardByRegion()
 
 /**
  * List blueprint "Day tabs, banded agenda", with the whole rate board as its content:
@@ -13,6 +12,8 @@ const groups = boardByRegion()
  * blocks; the region's currencies on the right as alternating tone bands.
  */
 export default function CurrencyBoard() {
+  const { boardByRegion, currencyCount, updatedAt } = useRates()
+  const groups = useMemo(() => boardByRegion(), [boardByRegion])
   const [region, setRegion] = useState(groups[0].region)
 
   return (
@@ -80,7 +81,8 @@ export default function CurrencyBoard() {
 
       <p className="mt-6 max-w-[60ch] text-[16px] text-ink-soft">
         {currencyCount} currencies, each quoted as the mid-market rate for one unit in naira. The
-        board is a snapshot refreshed from our rate feed, not a live quote.
+        board is refreshed from our rate feed every hour{updatedAt ? `; these rates are from ${formatUpdated(updatedAt)}` : ''}.
+        It is a reference, not a live dealing quote.
       </p>
     </Reveal>
   )
